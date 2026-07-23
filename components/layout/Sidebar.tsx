@@ -21,17 +21,20 @@ import {
     Share2,
     ChevronLeft,
     Menu,
-    X
+    X,
+    Activity,
+    MonitorX
 } from "lucide-react";
 
 const navItems = [
     { name: "Overview", href: "/", icon: LayoutDashboard },
     { name: "Ride Management", href: "/rides", icon: Car },
     { name: "Driver Approvals", href: "/drivers", icon: UserCheck, badge: "12" },
-    { name: "User Verification", href: "/verification", icon: ShieldCheck },
-    { name: "Live Map", href: "/map", icon: Map },
+    { name: "Users", href: "/users", icon: ShieldCheck },
     { name: "Financials", href: "/financials", icon: Wallet },
     { name: "Vehicle Approvals", href: "/vehicles", icon: Truck },
+    { name: "Activity Logs", href: "/activity-logs", icon: Activity },
+    { name: "System Logs", href: "/system-logs", icon: MonitorX },
     { name: "Settings", href: "/settings", icon: Settings },
 ];
 
