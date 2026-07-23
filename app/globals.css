@@ -1,26 +1,38 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Direct Tailwind v4 to toggle dark mode using the .dark class on <html> */
+@variant dark (&:where(.dark, .dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer utilities {
+  /* Dynamic Primary Color Tokens */
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg-main: #F4F6F8;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --border-color: rgba(0, 0, 0, 0.08);
+    --primary-blue: #2563EB;
+    --primary-blue-glow: rgba(37, 99, 235, 0.15);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .dark {
+    --bg-main: #0B0E14;
+    --card-bg: rgba(18, 22, 31, 0.75);
+    --border-color: rgba(255, 255, 255, 0.08);
+    --primary-blue: #2563EB;
+    --primary-blue-glow: rgba(37, 99, 235, 0.35);
+  }
+
+  /* Smooth Glass Card Styling */
+  .poolshare-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-color);
+  }
+
+  /* Active Navigation Pill Glow */
+  .blue-active-pill {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(29, 78, 216, 0.15) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    box-shadow: 0 4px 20px var(--primary-blue-glow);
+  }
 }
