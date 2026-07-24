@@ -39,10 +39,10 @@ export default function LoginPage() {
 
         // Read redirect target or default to dashboard
         const searchParams = new URLSearchParams(window.location.search);
-        const redirectTo = searchParams.get("from") || "/activity-logs";
+        const redirectTo = searchParams.get("from") || "/";
 
         router.push(redirectTo);
-        router.refresh(); // Refresh route tree so middleware evaluates immediately
+        router.refresh();
       } else {
         setIsLoading(false);
         setErrorMessage("Invalid credentials. Please use default admin access.");

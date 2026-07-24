@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
 
   // 4. If the user IS authenticated and tries to visit /login -> Redirect to dashboard
   if (authToken && isPublicRoute) {
-    return NextResponse.redirect(new URL("/activity-logs", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();
