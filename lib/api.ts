@@ -1,18 +1,47 @@
 // lib/axios.ts
 import axios from "axios";
 
+// Helper function to extract token from document cookies
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
+  return null;
+}
+
+// Helper function to retrieve auth token
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+
+  // 1. Try reading the cookie set by auth session
+  const cookieToken = getCookie("admin_session");
+  if (cookieToken) return cookieToken;
+
+  // 2. Fallback to localStorage keys
+  return (
+    localStorage.getItem("admin_session") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("jwt")
+  );
+}
+
 export const apiClient = axios.create({
-  baseURL: "https://carpool-node-backend-app.onrender.com/api/v1",
+  baseURL: "https://carpool-node-backend-app.onrender.com/api/v1/admin",
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000,
 });
 
-// Request Interceptor: Logs outgoing API calls
+// Request Interceptor: Attach Bearer Token automatically
 apiClient.interceptors.request.use(
   (config) => {
-    // Store request start time to measure latency
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (config as any).metadata = { startTime: new Date() };
 
@@ -39,7 +68,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Logs incoming responses (Success vs Failure)
+// Response Interceptor: Logs & Error Handling
 apiClient.interceptors.response.use(
   (response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

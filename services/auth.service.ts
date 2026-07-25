@@ -25,7 +25,7 @@ export interface AdminLoginResponse {
 
 export const authService = {
   adminLogin: async (payload: AdminLoginPayload): Promise<AdminLoginResponse> => {
-    const response = await apiClient.post<AdminLoginResponse>("/admin/login", payload);
+    const response = await apiClient.post<AdminLoginResponse>("/login", payload);
     return response.data;
   },
 };
