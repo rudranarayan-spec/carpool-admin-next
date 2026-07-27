@@ -16,7 +16,8 @@ export interface RoutePoint {
   lat: number;
   lng: number;
 }
-export type RideStatus = "scheduled" | "in_progress" | "in progress" | "completed" | "cancelled" | string;
+// types/rides.types.ts
+export type RideStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 // Minimal Ride interface for list view (matches optimized SQL query)
 export interface RideListItem extends Driver, Vehicle {
   id: number;
@@ -24,10 +25,10 @@ export interface RideListItem extends Driver, Vehicle {
   vehicle_id: number;
   source_address: string;
   destination_address: string;
-  price_per_seat: string;
+  price_per_seat: number;
   total_seats: number;
   available_seats: number;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: 'scheduled' | 'completed' | 'cancelled' | "in_progress";
   ride_date: string;
   departure_time: string;
 }
@@ -79,7 +80,7 @@ export interface CreateRidePayload {
   smoking_allowed?: 'yes' | 'no';
   instant_booking?: 'yes' | 'no';
   max_two_in_back?: 'yes' | 'no';
-  price_per_seat: string;
+  price_per_seat: number;
   total_seats: number;
   available_seats?: number;
   status?: 'scheduled' | 'completed' | 'cancelled' | 'in_progress';
