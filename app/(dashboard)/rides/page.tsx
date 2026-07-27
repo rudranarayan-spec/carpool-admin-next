@@ -21,9 +21,19 @@ import {
   Edit2,
   Trash2,
   Save,
+  Car,
+  Hash,
+  Fuel,
+  User,
+  DollarSign,
+  Users,
+  Navigation,
 } from "lucide-react";
 import { RideService } from "@/services/ride.service"; // Adjust path as needed
-import { RideListItem, RideStatus } from "@/types/rides.types"; // Adjust path as needed
+import { CreateRidePayload, RideListItem, RideStatus } from "@/types/rides.types"; // Adjust path as needed
+import { toast } from "sonner";
+import EditRideForm from "@/components/dashboard/EditRideForm";
+import CreateRideModal from "@/components/dashboard/CreateRideModal";
 
 export default function RideManagementPage() {
   const queryClient = useQueryClient();
@@ -33,6 +43,8 @@ export default function RideManagementPage() {
 
   // Selection & Modal States
   const [selectedRideId, setSelectedRideId] = useState<number | string | null>(null);
+
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   // Edit / Delete State Controls
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -68,6 +80,24 @@ export default function RideManagementPage() {
     enabled: selectedRideId !== null,
   });
 
+  const createRideMutation = useMutation({
+    mutationFn: (newRide: CreateRidePayload) => RideService.createRide(newRide),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rides"] });
+    },
+  });
+
+  const handleCreateRide = (data: CreateRidePayload) => {
+    toast.promise(createRideMutation.mutateAsync(data), {
+      loading: "Creating new ride...",
+      success: () => {
+        setIsCreateOpen(false);
+        return "Ride created successfully! 🚗";
+      },
+      error: (err) => err?.message || "Failed to create ride",
+    });
+  };
+
   const detailsError = detailsErrorObj instanceof Error ? detailsErrorObj.message : detailsErrorObj ? "Failed to fetch ride details" : null;
   // ----------------------------------------------------
   // 2. Mutations (Update & Delete)
@@ -86,7 +116,7 @@ export default function RideManagementPage() {
       }
     },
     onError: (err: Error) => {
-      alert(err.message || "Failed to update ride");
+      toast(err.message || "Failed to update ride");
     },
   });
 
@@ -98,7 +128,7 @@ export default function RideManagementPage() {
       handleCloseDrawer();
     },
     onError: (err: Error) => {
-      alert(err.message || "Failed to delete ride");
+      toast(err.message || "Failed to delete ride");
     },
   });
 
@@ -124,12 +154,66 @@ export default function RideManagementPage() {
   const handleUpdateRide = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRideId) return;
-    updateRideMutation.mutate({ id: selectedRideId, payload: editFormData });
+
+    toast(`Update Ride #${selectedRideId}?`, {
+      description: "Are you sure you want to save these changes?",
+      duration: 5000,
+      action: {
+        label: "Update",
+        onClick: () => {
+          toast.promise(
+            updateRideMutation.mutateAsync({
+              id: selectedRideId,
+              payload: editFormData,
+            }),
+            {
+              loading: "Updating ride details...",
+              success: () => {
+                setIsEditing(false);
+                return `Ride #${selectedRideId} updated successfully!`;
+              },
+              error: (err) =>
+                err?.message || "Failed to update ride. Please try again.",
+            }
+          );
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => toast.dismiss(),
+      },
+    });
   };
 
+  // 2. DELETE RIDE WITH CONFIRMATION
   const handleDeleteRide = () => {
     if (!selectedRideId) return;
-    deleteRideMutation.mutate(selectedRideId);
+
+    toast(`Delete Ride #${selectedRideId}?`, {
+      description: "This action is permanent and cannot be undone.",
+      duration: 6000,
+      action: {
+        label: "Delete",
+        onClick: () => {
+          toast.promise(
+            deleteRideMutation.mutateAsync(selectedRideId),
+            {
+              loading: "Deleting ride record...",
+              success: () => {
+                handleCloseDrawer();
+                return `Ride #${selectedRideId} deleted successfully!`;
+              },
+              error: (err) =>
+                err?.message || "Failed to delete ride. Please try again.",
+            }
+          );
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => toast.dismiss(),
+      },
+    });
   };
 
   // Safe Formatters
@@ -144,10 +228,10 @@ export default function RideManagementPage() {
     return isNaN(date.getTime())
       ? "N/A"
       : date.toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        });
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
   };
 
   const formatTime = (timeString?: string) => {
@@ -254,10 +338,21 @@ export default function RideManagementPage() {
           >
             <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
           </button>
-          <button className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition active:scale-95">
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="flex-1 sm:flex-initial px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 transition active:scale-95"
+          >
             <Plus className="w-4 h-4" />
             Create Manual Ride
           </button>
+
+          {/* Modal Component */}
+          <CreateRideModal
+            isOpen={isCreateOpen}
+            onClose={() => setIsCreateOpen(false)}
+            onSubmit={handleCreateRide}
+            isLoading={createRideMutation.isPending}
+          />
         </div>
       </div>
 
@@ -289,11 +384,10 @@ export default function RideManagementPage() {
               <button
                 key={tab}
                 onClick={() => setSelectedFilter(tab)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 {tab}
               </button>
@@ -521,279 +615,269 @@ export default function RideManagementPage() {
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-full sm:w-[500px] bg-white dark:bg-[#090C10] border-l border-gray-200 dark:border-white/10 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl flex flex-col justify-between"
+              transition={{ type: "spring", damping: 28, stiffness: 220 }}
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-[540px] bg-slate-50 dark:bg-[#0B0F17] border-l border-slate-200 dark:border-slate-800 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl flex flex-col justify-between text-slate-900 dark:text-slate-100"
             >
               <div className="space-y-6">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                      {isEditing ? "Edit Ride Configuration" : "Ride Overview"}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800/80">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold tracking-widest text-indigo-600 dark:text-indigo-400 uppercase bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-800/50">
+                      {isEditing ? "Configuration" : "Ride Summary"}
+                    </span>
+                    <h2 className="text-xl font-black tracking-tight text-slate-900 dark:text-white pt-1">
+                      {isEditing ? "Edit Ride Details" : "Ride Overview"}
                     </h2>
-                    <p className="text-xs font-mono text-blue-600 dark:text-blue-400">
-                      Ride ID: #{selectedRideId}
-                    </p>
                   </div>
-                  <button
-                    onClick={handleCloseDrawer}
-                    className="p-2 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-slate-800/60 px-2.5 py-1.5 rounded-lg border border-slate-300/50 dark:border-slate-700/50">
+                      #{selectedRideId}
+                    </span>
+                    <button
+                      onClick={handleCloseDrawer}
+                      className="p-2 rounded-xl bg-slate-200/50 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all duration-200 active:scale-95"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Drawer Body - State Logic */}
                 {loadingDetails ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                    <p className="text-sm font-medium">Fetching specific ride record...</p>
+                  <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-3">
+                    <Loader2 className="w-9 h-9 animate-spin text-indigo-500" />
+                    <p className="text-sm font-medium tracking-wide animate-pulse">
+                      Fetching ride analytics...
+                    </p>
                   </div>
                 ) : detailsError ? (
-                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm flex flex-col gap-2">
-                    <p>{detailsError}</p>
+                  <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm flex flex-col gap-3">
+                    <p className="font-medium">{detailsError}</p>
                     <button
                       onClick={() => handleSelectRide(selectedRideId)}
-                      className="underline font-bold self-start text-xs"
+                      className="px-4 py-2 bg-rose-500 text-white font-bold rounded-xl text-xs self-start hover:bg-rose-600 transition shadow-sm"
                     >
                       Try Again
                     </button>
                   </div>
                 ) : selectedRide && !isEditing ? (
                   /* VIEW MODE */
-                  <div className="space-y-6">
-                    {/* Status Display */}
-                    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                        Current Status
-                      </span>
-                      {getStatusBadge(selectedRide.status)}
+                  <div className="space-y-5">
+                    {/* Status Card */}
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-100 to-white dark:from-slate-900/90 dark:to-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          Current Status
+                        </span>
+                      </div>
+                      <div>{getStatusBadge(selectedRide.status)}</div>
                     </div>
 
-                    {/* Route Info */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Route & Schedule
-                      </h3>
-                      <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-3 text-sm">
-                        <div className="flex items-start gap-3">
-                          <MapPin className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-xs text-gray-400 font-medium">Pickup Location</p>
-                            <p className="font-semibold text-gray-900 dark:text-white">
-                              {selectedRide.source_address}
-                            </p>
+                    {/* Route & Schedule Info (Amber / Orange Theme) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 px-1">
+                        <Navigation className="w-3.5 h-3.5 text-amber-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                          Route & Schedule
+                        </h3>
+                      </div>
+                      <div className="p-4 bg-amber-50/40 dark:bg-amber-950/10 rounded-2xl border border-amber-200/60 dark:border-amber-900/30 space-y-4">
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-500 mt-0.5">
+                              <MapPin className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                Pickup Location
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm mt-0.5">
+                                {selectedRide.source_address}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                        <div className="h-4 border-l-2 border-dashed border-gray-300 dark:border-white/20 ml-2" />
-                        <div className="flex items-start gap-3">
-                          <MapPin className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-xs text-gray-400 font-medium">Destination</p>
-                            <p className="font-semibold text-gray-900 dark:text-white">
-                              {selectedRide.destination_address}
-                            </p>
+
+                          <div className="h-4 border-l-2 border-dashed border-amber-300 dark:border-amber-700/50 ml-3.5" />
+
+                          <div className="flex items-start gap-3">
+                            <div className="p-1.5 bg-rose-500/10 rounded-lg text-rose-500 mt-0.5">
+                              <MapPin className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                Destination
+                              </p>
+                              <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm mt-0.5">
+                                {selectedRide.destination_address}
+                              </p>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="pt-3 border-t border-gray-200 dark:border-white/10 grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="text-gray-400 block">Date:</span>
-                            <span className="font-bold text-gray-900 dark:text-white">
-                              {formatDate(selectedRide.ride_date)}
-                            </span>
+                        <div className="pt-3 border-t border-amber-200/60 dark:border-amber-900/30 grid grid-cols-2 gap-3">
+                          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-200/40 dark:border-amber-900/20">
+                            <Calendar className="w-4 h-4 text-amber-500 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-medium block">
+                                Date
+                              </span>
+                              <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                                {formatDate(selectedRide.ride_date)}
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-gray-400 block">Departure Time:</span>
-                            <span className="font-bold text-gray-900 dark:text-white">
-                              {formatTime(selectedRide.departure_time)}
-                            </span>
+                          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-amber-200/40 dark:border-amber-900/20">
+                            <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-medium block">
+                                Departure Time
+                              </span>
+                              <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                                {formatTime(selectedRide.departure_time)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Driver Profile */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Driver Information
-                      </h3>
-                      <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-2.5">
+                    {/* Driver Profile (Indigo Theme) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 px-1">
+                        <User className="w-3.5 h-3.5 text-indigo-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                          Driver Information
+                        </h3>
+                      </div>
+
+                      <div className="p-4 bg-indigo-50/40 dark:bg-indigo-950/10 rounded-2xl border border-indigo-200/60 dark:border-indigo-900/30 space-y-3">
+                        {/* Avatar & Name Header */}
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-sm flex items-center justify-center">
+                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
                             {getDriverInitials(selectedRide.driver_name)}
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900 dark:text-white capitalize">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-slate-900 dark:text-white capitalize text-sm truncate">
                               {selectedRide.driver_name}
                             </p>
-                            <p className="text-xs text-gray-400">Driver ID: #{selectedRide.driver_id}</p>
+                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                              Driver ID: #{selectedRide.driver_id}
+                            </p>
                           </div>
                         </div>
-                        <div className="pt-2 border-t border-gray-200 dark:border-white/10 space-y-1.5 text-xs">
-                          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                            <Phone className="w-3.5 h-3.5 text-blue-500" />
-                            <span>{selectedRide.driver_phone}</span>
+
+                        {/* Contact Information Row */}
+                        <div className="pt-2 border-t border-indigo-200/60 dark:border-indigo-900/30 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-900/80 px-3 py-2 rounded-xl border border-indigo-200/50 dark:border-indigo-900/30 shadow-xs">
+                            <Phone className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                            <span className="font-mono text-xs font-medium truncate">
+                              {selectedRide.driver_phone}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                            <Mail className="w-3.5 h-3.5 text-blue-500" />
-                            <span>{selectedRide.driver_email}</span>
+
+                          <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-900/80 px-3 py-2 rounded-xl border border-indigo-200/50 dark:border-indigo-900/30 shadow-xs">
+                            <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                            <span className="text-xs font-medium truncate" title={selectedRide.driver_email}>
+                              {selectedRide.driver_email}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Vehicle Details */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Vehicle Specs
-                      </h3>
+                    {/* Vehicle Details (Violet Theme) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 px-1">
+                        <Car className="w-3.5 h-3.5 text-violet-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
+                          Vehicle Specs
+                        </h3>
+                      </div>
                       <div className="grid grid-cols-3 gap-2">
-                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
-                          <p className="text-[10px] text-gray-400 uppercase font-medium">Model</p>
-                          <p className="font-bold text-gray-900 dark:text-white text-xs mt-0.5 capitalize truncate">
+                        <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
+                          <div className="flex items-center gap-1 text-slate-400 mb-1">
+                            <Car className="w-3 h-3 text-violet-500" />
+                            <p className="text-[10px] font-semibold uppercase">Model</p>
+                          </div>
+                          <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
                             {selectedRide.vehicle_model}
                           </p>
                         </div>
-                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
-                          <p className="text-[10px] text-gray-400 uppercase font-medium">Reg Number</p>
-                          <p className="font-bold text-gray-900 dark:text-white text-xs mt-0.5 uppercase truncate">
+                        <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
+                          <div className="flex items-center gap-1 text-slate-400 mb-1">
+                            <Hash className="w-3 h-3 text-violet-500" />
+                            <p className="text-[10px] font-semibold uppercase">Plate</p>
+                          </div>
+                          <p className="font-bold text-slate-900 dark:text-white text-xs uppercase truncate">
                             {selectedRide.vehicle_registration_number}
                           </p>
                         </div>
-                        <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
-                          <p className="text-[10px] text-gray-400 uppercase font-medium">Fuel Type</p>
-                          <p className="font-bold text-gray-900 dark:text-white text-xs mt-0.5 capitalize truncate">
+                        <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
+                          <div className="flex items-center gap-1 text-slate-400 mb-1">
+                            <Fuel className="w-3 h-3 text-violet-500" />
+                            <p className="text-[10px] font-semibold uppercase">Fuel</p>
+                          </div>
+                          <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
                             {selectedRide.vehicle_fuel_type}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Pricing & Seat Occupancy */}
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Billing & Occupancy
-                      </h3>
-                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
+                    {/* Pricing & Seat Occupancy (Emerald Theme) */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1.5 px-1">
+                        <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                          Billing & Occupancy
+                        </h3>
+                      </div>
+                      <div className="flex items-center justify-between p-4 bg-emerald-50/40 dark:bg-emerald-950/10 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/30">
                         <div>
-                          <p className="text-xs text-gray-400 font-medium">Price per Seat</p>
-                          <p className="text-xl font-black text-gray-900 dark:text-white">
+                          <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+                            Price per Seat
+                          </p>
+                          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
                             {formatCurrency(selectedRide.price_per_seat)}
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-400 font-medium">Seat Availability</p>
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                          <div className="flex items-center justify-end gap-1 text-slate-400 mb-0.5">
+                            <Users className="w-3.5 h-3.5 text-emerald-500" />
+                            <p className="text-[11px] font-semibold uppercase tracking-wider">
+                              Occupancy
+                            </p>
+                          </div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">
                             {selectedRide.available_seats} / {selectedRide.total_seats} Available
                           </p>
-                          <p className="text-xs text-blue-500 font-medium mt-0.5">
+                          <span className="inline-block text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full mt-1">
                             {selectedRide.total_seats - selectedRide.available_seats} Booked
-                          </p>
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
                   /* EDIT MODE FORM */
-                  <form id="edit-ride-form" onSubmit={handleUpdateRide} className="space-y-4 text-xs">
-                    <div>
-                      <label className="block text-gray-500 dark:text-gray-400 font-bold mb-1">Status</label>
-                      <select
-                        value={editFormData.status || ""}
-                        onChange={(e) =>
-                          setEditFormData({
-                            ...editFormData,
-                            status: e.target.value as RideStatus,
-                          })
-                        }
-                        className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-2.5 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      >
-                        <option value="scheduled">Scheduled</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-gray-500 dark:text-gray-400 font-bold mb-1">Price per Seat (₹)</label>
-                        <input
-                          type="number"
-                          value={editFormData.price_per_seat ?? ""}
-                          onChange={(e) =>
-                            setEditFormData({ ...editFormData, price_per_seat: Number(e.target.value) })
-                          }
-                          className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-2.5 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-gray-500 dark:text-gray-400 font-bold mb-1">Available Seats</label>
-                        <input
-                          type="number"
-                          value={editFormData.available_seats ?? ""}
-                          onChange={(e) =>
-                            setEditFormData({ ...editFormData, available_seats: Number(e.target.value) })
-                          }
-                          className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-2.5 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-500 dark:text-gray-400 font-bold mb-1">Source Address</label>
-                      <input
-                        type="text"
-                        value={editFormData.source_address || ""}
-                        onChange={(e) => setEditFormData({ ...editFormData, source_address: e.target.value })}
-                        className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-2.5 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-gray-500 dark:text-gray-400 font-bold mb-1">Destination Address</label>
-                      <input
-                        type="text"
-                        value={editFormData.destination_address || ""}
-                        onChange={(e) => setEditFormData({ ...editFormData, destination_address: e.target.value })}
-                        className="w-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-2.5 font-semibold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                  </form>
+                  <EditRideForm
+                    editFormData={editFormData}
+                    setEditFormData={setEditFormData}
+                    handleUpdateRide={handleUpdateRide}
+                  />
                 )}
               </div>
 
               {/* Action Buttons Footer */}
               {selectedRide && !loadingDetails && (
-                <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-3">
-                  {isDeleting ? (
-                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-center space-y-2">
-                      <p className="text-xs font-bold text-rose-500">
-                        Are you sure you want to permanently delete this ride?
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setIsDeleting(false)}
-                          className="flex-1 py-2 bg-gray-200 dark:bg-white/10 text-gray-800 dark:text-white rounded-lg text-xs font-bold"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleDeleteRide}
-                          disabled={actionLoading}
-                          className="flex-1 py-2 bg-rose-600 text-white rounded-lg text-xs font-bold flex justify-center items-center gap-1"
-                        >
-                          {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm Delete"}
-                        </button>
-                      </div>
-                    </div>
-                  ) : isEditing ? (
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                  {isEditing ? (
                     <div className="flex gap-3">
                       <button
                         type="button"
                         onClick={() => setIsEditing(false)}
-                        className="flex-1 py-3 px-4 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-white font-bold text-xs rounded-xl transition"
+                        className="flex-1 py-3 px-4 bg-slate-200/60 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl transition-all duration-200 active:scale-95"
                       >
                         Cancel
                       </button>
@@ -801,7 +885,7 @@ export default function RideManagementPage() {
                         type="submit"
                         form="edit-ride-form"
                         disabled={actionLoading}
-                        className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/20 transition flex justify-center items-center gap-2"
+                        className="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/20 transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50"
                       >
                         {actionLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -815,16 +899,28 @@ export default function RideManagementPage() {
                   ) : (
                     <div className="flex gap-3">
                       <button
-                        onClick={() => setIsEditing(true)}
-                        className="flex-1 py-3 px-4 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 dark:text-blue-400 font-bold text-xs rounded-xl transition flex justify-center items-center gap-2 border border-blue-500/20"
+                        onClick={() => {
+                          if (selectedRide) {
+                            setEditFormData(selectedRide);
+                          }
+                          setIsEditing(true);
+                        }}
+                        className="flex-1 py-3 px-4 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-xs rounded-xl transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 border border-indigo-500/20"
                       >
                         <Edit2 className="w-4 h-4" /> Edit Ride
                       </button>
                       <button
-                        onClick={() => setIsDeleting(true)}
-                        className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition flex justify-center items-center gap-2"
+                        onClick={handleDeleteRide}
+                        disabled={actionLoading}
+                        className="flex-1 py-3 px-4 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition-all duration-200 active:scale-95 flex justify-center items-center gap-2 disabled:opacity-50"
                       >
-                        <Trash2 className="w-4 h-4" /> Delete Ride
+                        {actionLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Trash2 className="w-4 h-4" /> Delete Ride
+                          </>
+                        )}
                       </button>
                     </div>
                   )}

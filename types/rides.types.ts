@@ -108,3 +108,15 @@ export interface MutationRideResponse {
     ride_id?: number;
   };
 }
+
+export interface CreateRidePayload {
+  driver_id: number;
+  vehicle_id: number;
+  source_address: string;
+  destination_address: string;
+  ride_date: string;       // YYYY-MM-DD
+  departure_time: string;  // HH:mm
+  price_per_seat: number;
+  total_seats: number;
+  status?: RideStatus;
+}
