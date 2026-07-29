@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { DriverRideItem, DriverStatus } from "@/types/driver.types";
 import { RideService } from "@/services/ride.service";
+import { useRouter } from "next/navigation";
 
 export interface DriverDocument {
   id: string;
@@ -101,6 +102,8 @@ export function DriverDetailsDrawer({
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const tabLayoutId = useId();
+
+  const router = useRouter()
 
   const driverId = driver?.id;
 
@@ -200,11 +203,10 @@ export function DriverDetailsDrawer({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-xl transition-colors duration-200 select-none z-10 ${
-                        isActive
+                      className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-xl transition-colors duration-200 select-none z-10 ${isActive
                           ? "text-blue-600 dark:text-blue-400"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                      }`}
+                        }`}
                     >
                       {isActive && (
                         <motion.div
@@ -302,10 +304,10 @@ export function DriverDetailsDrawer({
                               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                                 {driver.created_at
                                   ? new Date(driver.created_at).toLocaleDateString("en-GB", {
-                                      day: "2-digit",
-                                      month: "short",
-                                      year: "numeric",
-                                    })
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                   : "N/A"}
                               </p>
                             </div>
@@ -334,6 +336,10 @@ export function DriverDetailsDrawer({
                             {ridesToDisplay.map((ride) => (
                               <div
                                 key={ride.id}
+                                onClick={() => {
+                                  onClose(); 
+                                  router.push(`/rides/${ride.id}`);
+                                }}
                                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2"
                               >
                                 <div className="flex items-center justify-between">
@@ -388,13 +394,12 @@ export function DriverDetailsDrawer({
                                 </span>
                               </div>
                               <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${
-                                  doc.status === "verified"
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${doc.status === "verified"
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                                     : doc.status === "rejected"
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                                }`}
+                                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                  }`}
                               >
                                 {doc.status}
                               </span>
