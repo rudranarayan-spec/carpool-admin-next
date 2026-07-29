@@ -7,7 +7,7 @@ export function useLogin() {
     mutationFn: (payload: AdminLoginPayload) => authService.adminLogin(payload),
     onSuccess: (data) => {
       if (data.token) {
-        document.cookie = `admin_session=${data.token}; path=/; max-age=3600; SameSite=Lax; Secure`;
+        document.cookie = `admin_session=${data.token}; path=/; max-age=86400; SameSite=Lax; Secure`;
       }
       if (data.user) {
         localStorage.setItem("admin_user", JSON.stringify(data.user));

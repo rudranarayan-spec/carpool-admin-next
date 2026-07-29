@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
+import { DriverStatus } from "@/types/driver.types";
 
 export interface Driver {
   id: number;
@@ -49,7 +50,9 @@ export const fetchDrivers = async ({
   if (search) params.search = search;
 
   // Endpoint is relative to baseURL: https://carpool-node-backend-app.onrender.com/api/v1/admin
-  const response = await apiClient.get<DriversApiResponse>("/drivers", { params });
+  const response = await apiClient.get<DriversApiResponse>("/drivers", {
+    params,
+  });
   return response.data;
 };
 
@@ -73,11 +76,11 @@ export function useUpdateDriverStatus() {
       reason,
     }: {
       driverId: number;
-      status: "active" | "inactive" | "rejected";
+      status: DriverStatus;
       reason?: string;
     }) => {
       // Endpoint is relative to baseURL: https://carpool-node-backend-app.onrender.com/api/v1/admin
-      const response = await apiClient.patch(`/drivers/${driverId}/status`, {
+      const response = await apiClient.patch(`/drivers/${driverId}`, {
         status,
         reason,
       });

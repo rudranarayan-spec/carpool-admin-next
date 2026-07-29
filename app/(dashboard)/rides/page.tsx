@@ -30,7 +30,11 @@ import {
   Navigation,
 } from "lucide-react";
 import { RideService } from "@/services/ride.service"; // Adjust path as needed
-import { CreateRidePayload, RideListItem, RideStatus } from "@/types/rides.types"; // Adjust path as needed
+import {
+  CreateRidePayload,
+  RideListItem,
+  RideStatus,
+} from "@/types/rides.types"; // Adjust path as needed
 import { toast } from "sonner";
 import EditRideForm from "@/components/dashboard/EditRideForm";
 import CreateRideModal from "@/components/dashboard/CreateRideModal";
@@ -42,7 +46,9 @@ export default function RideManagementPage() {
   const [selectedFilter, setSelectedFilter] = useState<string>("All");
 
   // Selection & Modal States
-  const [selectedRideId, setSelectedRideId] = useState<number | string | null>(null);
+  const [selectedRideId, setSelectedRideId] = useState<number | string | null>(
+    null,
+  );
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -67,7 +73,12 @@ export default function RideManagementPage() {
     queryFn: RideService.getAllRides,
   });
 
-  const error = ridesError instanceof Error ? ridesError.message : ridesError ? "Failed to load rides" : null;
+  const error =
+    ridesError instanceof Error
+      ? ridesError.message
+      : ridesError
+        ? "Failed to load rides"
+        : null;
 
   // Fetch Single Ride Details when selectedRideId is set
   const {
@@ -98,15 +109,25 @@ export default function RideManagementPage() {
     });
   };
 
-  const detailsError = detailsErrorObj instanceof Error ? detailsErrorObj.message : detailsErrorObj ? "Failed to fetch ride details" : null;
+  const detailsError =
+    detailsErrorObj instanceof Error
+      ? detailsErrorObj.message
+      : detailsErrorObj
+        ? "Failed to fetch ride details"
+        : null;
   // ----------------------------------------------------
   // 2. Mutations (Update & Delete)
   // ----------------------------------------------------
 
   // Update Ride Mutation
   const updateRideMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number | string; payload: Partial<RideListItem> }) =>
-      RideService.updateRide(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: number | string;
+      payload: Partial<RideListItem>;
+    }) => RideService.updateRide(id, payload),
     onSuccess: (response) => {
       if (response.status === "success") {
         // Invalidate list query and single ride query to refresh data
@@ -133,7 +154,8 @@ export default function RideManagementPage() {
   });
 
   // Action Loading helper
-  const actionLoading = updateRideMutation.isPending || deleteRideMutation.isPending;
+  const actionLoading =
+    updateRideMutation.isPending || deleteRideMutation.isPending;
 
   // ----------------------------------------------------
   // 3. Handlers
@@ -174,7 +196,7 @@ export default function RideManagementPage() {
               },
               error: (err) =>
                 err?.message || "Failed to update ride. Please try again.",
-            }
+            },
           );
         },
       },
@@ -195,18 +217,15 @@ export default function RideManagementPage() {
       action: {
         label: "Delete",
         onClick: () => {
-          toast.promise(
-            deleteRideMutation.mutateAsync(selectedRideId),
-            {
-              loading: "Deleting ride record...",
-              success: () => {
-                handleCloseDrawer();
-                return `Ride #${selectedRideId} deleted successfully!`;
-              },
-              error: (err) =>
-                err?.message || "Failed to delete ride. Please try again.",
-            }
-          );
+          toast.promise(deleteRideMutation.mutateAsync(selectedRideId), {
+            loading: "Deleting ride record...",
+            success: () => {
+              handleCloseDrawer();
+              return `Ride #${selectedRideId} deleted successfully!`;
+            },
+            error: (err) =>
+              err?.message || "Failed to delete ride. Please try again.",
+          });
         },
       },
       cancel: {
@@ -228,10 +247,10 @@ export default function RideManagementPage() {
     return isNaN(date.getTime())
       ? "N/A"
       : date.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      });
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
   };
 
   const formatTime = (timeString?: string) => {
@@ -325,7 +344,8 @@ export default function RideManagementPage() {
             Ride Management
           </h1>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-            Monitor, inspect, and direct active carpool journeys across your fleet.
+            Monitor, inspect, and direct active carpool journeys across your
+            fleet.
           </p>
         </div>
 
@@ -336,7 +356,9 @@ export default function RideManagementPage() {
             className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition active:scale-95 disabled:opacity-50"
             title="Refresh List"
           >
-            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+            />
           </button>
           <button
             onClick={() => setIsCreateOpen(true)}
@@ -378,21 +400,25 @@ export default function RideManagementPage() {
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
-          {["All", "Scheduled", "In Progress", "Completed", "Cancelled"].map((tab) => {
-            const isActive = selectedFilter.toLowerCase() === tab.toLowerCase();
-            return (
-              <button
-                key={tab}
-                onClick={() => setSelectedFilter(tab)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+          {["All", "Scheduled", "In Progress", "Completed", "Cancelled"].map(
+            (tab) => {
+              const isActive =
+                selectedFilter.toLowerCase() === tab.toLowerCase();
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedFilter(tab)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                      : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                   }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
+                >
+                  {tab}
+                </button>
+              );
+            },
+          )}
         </div>
       </div>
 
@@ -438,7 +464,8 @@ export default function RideManagementPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10 text-sm">
                   {filteredRides.length > 0 ? (
                     filteredRides.map((ride) => {
-                      const seatsBooked = ride.total_seats - ride.available_seats;
+                      const seatsBooked =
+                        ride.total_seats - ride.available_seats;
                       return (
                         <tr
                           key={ride.id}
@@ -475,11 +502,15 @@ export default function RideManagementPage() {
                             <div className="space-y-1 max-w-xs">
                               <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 truncate">
                                 <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                <span className="truncate">{ride.source_address}</span>
+                                <span className="truncate">
+                                  {ride.source_address}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 truncate">
                                 <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                <span className="truncate">{ride.destination_address}</span>
+                                <span className="truncate">
+                                  {ride.destination_address}
+                                </span>
                               </div>
                             </div>
                           </td>
@@ -512,7 +543,10 @@ export default function RideManagementPage() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                      <td
+                        colSpan={8}
+                        className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                      >
                         No rides found matching your filters.
                       </td>
                     </tr>
@@ -549,7 +583,8 @@ export default function RideManagementPage() {
                               {ride.driver_name}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                              {ride.vehicle_model} • {ride.vehicle_registration_number}
+                              {ride.vehicle_model} •{" "}
+                              {ride.vehicle_registration_number}
                             </p>
                           </div>
                         </div>
@@ -566,11 +601,15 @@ export default function RideManagementPage() {
                       <div className="bg-gray-50 dark:bg-white/5 p-2.5 rounded-xl space-y-1.5 text-xs text-gray-600 dark:text-gray-300">
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span className="truncate">{ride.source_address}</span>
+                          <span className="truncate">
+                            {ride.source_address}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2 truncate">
                           <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                          <span className="truncate">{ride.destination_address}</span>
+                          <span className="truncate">
+                            {ride.destination_address}
+                          </span>
                         </div>
                       </div>
 
@@ -778,7 +817,10 @@ export default function RideManagementPage() {
 
                           <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 bg-white/80 dark:bg-slate-900/80 px-3 py-2 rounded-xl border border-indigo-200/50 dark:border-indigo-900/30 shadow-xs">
                             <Mail className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                            <span className="text-xs font-medium truncate" title={selectedRide.driver_email}>
+                            <span
+                              className="text-xs font-medium truncate"
+                              title={selectedRide.driver_email}
+                            >
                               {selectedRide.driver_email}
                             </span>
                           </div>
@@ -798,7 +840,9 @@ export default function RideManagementPage() {
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
                           <div className="flex items-center gap-1 text-slate-400 mb-1">
                             <Car className="w-3 h-3 text-violet-500" />
-                            <p className="text-[10px] font-semibold uppercase">Model</p>
+                            <p className="text-[10px] font-semibold uppercase">
+                              Model
+                            </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
                             {selectedRide.vehicle_model}
@@ -807,7 +851,9 @@ export default function RideManagementPage() {
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
                           <div className="flex items-center gap-1 text-slate-400 mb-1">
                             <Hash className="w-3 h-3 text-violet-500" />
-                            <p className="text-[10px] font-semibold uppercase">Plate</p>
+                            <p className="text-[10px] font-semibold uppercase">
+                              Plate
+                            </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs uppercase truncate">
                             {selectedRide.vehicle_registration_number}
@@ -816,7 +862,9 @@ export default function RideManagementPage() {
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
                           <div className="flex items-center gap-1 text-slate-400 mb-1">
                             <Fuel className="w-3 h-3 text-violet-500" />
-                            <p className="text-[10px] font-semibold uppercase">Fuel</p>
+                            <p className="text-[10px] font-semibold uppercase">
+                              Fuel
+                            </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
                             {selectedRide.vehicle_fuel_type}
@@ -850,10 +898,13 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="text-sm font-bold text-slate-900 dark:text-white">
-                            {selectedRide.available_seats} / {selectedRide.total_seats} Available
+                            {selectedRide.available_seats} /{" "}
+                            {selectedRide.total_seats} Available
                           </p>
                           <span className="inline-block text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full mt-1">
-                            {selectedRide.total_seats - selectedRide.available_seats} Booked
+                            {selectedRide.total_seats -
+                              selectedRide.available_seats}{" "}
+                            Booked
                           </span>
                         </div>
                       </div>

@@ -120,3 +120,26 @@ export interface CreateRidePayload {
   total_seats: number;
   status?: RideStatus;
 }
+
+export interface PassengerRideItem {
+  ride_id: number;
+  source_address: string;
+  destination_address: string;
+  price_per_seat: string;
+  ride_date: string;
+  departure_time: string;
+  ride_status: string;
+  booking_id: number;
+  seats: number;
+  booking_status: string;
+  driver_id: number;
+  driver_name: string;
+  driver_phone: string;
+}
+
+export interface FetchPassengerRidesResponse {
+  success: boolean;
+  count: number;
+  data: PassengerRideItem[];
+}
+

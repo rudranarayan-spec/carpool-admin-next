@@ -2,13 +2,16 @@ import { apiClient } from "@/lib/api";
 import axios from "axios";
 import {
   CreateRidePayload,
+  FetchPassengerRidesResponse,
   FetchRidesResponse,
   FetchSingleRideResponse,
   MutationRideResponse,
+  PassengerRideItem,
   RideDetails,
   RideListItem,
   UpdateRidePayload,
 } from "../types/rides.types";
+import { DriverRideItem, FetchDriverRidesResponse } from "@/types/driver.types";
 
 const parseApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
@@ -77,6 +80,40 @@ export const RideService = {
       return response.data;
     } catch (error: unknown) {
       console.error(`Error deleting ride #${id}:`, parseApiError(error));
+      throw error;
+    }
+  },
+
+  getRidesByDriverId: async (driverId: number | string): Promise<DriverRideItem[]> => {
+    try {
+      const response = await apiClient.get<FetchDriverRidesResponse>(
+        `/rides/driver/${driverId}`
+      );
+
+      if (response.data.success) {
+        return response.data.data;
+      }
+
+      throw new Error("Failed to fetch driver rides");
+    } catch (error: unknown) {
+      console.error(`Error fetching rides for driver #${driverId}:`, parseApiError(error));
+      throw error;
+    }
+  },
+
+  getRidesByPassengerId: async (passengerId: number | string): Promise<PassengerRideItem[]> => {
+    try {
+      const response = await apiClient.get<FetchPassengerRidesResponse>(
+        `/rides/passenger/${passengerId}`
+      );
+
+      if (response.data.success) {
+        return response.data.data;
+      }
+
+      throw new Error("Failed to fetch passenger rides");
+    } catch (error: unknown) {
+      console.error(`Error fetching rides for passenger #${passengerId}:`, parseApiError(error));
       throw error;
     }
   },
