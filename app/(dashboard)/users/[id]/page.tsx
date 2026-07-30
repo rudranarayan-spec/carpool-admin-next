@@ -284,7 +284,7 @@ export default function UserDetailsPage() {
               </div>
             </div>
             <div className="text-2xl font-bold mt-2">
-              ${mockMetrics.totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{mockMetrics.totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1 font-medium">
               <TrendingUp className="w-3.5 h-3.5" /> Platform revenue share generated
@@ -299,7 +299,7 @@ export default function UserDetailsPage() {
               </div>
             </div>
             <div className="text-2xl font-bold mt-2">
-              ${mockMetrics.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{mockMetrics.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-slate-500 mt-1">
               Across {mockMetrics.bookingsMade} rides booked

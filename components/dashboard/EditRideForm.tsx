@@ -69,7 +69,7 @@ export default function EditRideForm({
               className="w-full bg-white dark:bg-[#12171F] border border-gray-200 dark:border-white/10 rounded-xl pl-8 pr-3 py-2.5 font-bold text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500 transition"
             />
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-              ₹
+              $
             </span>
           </div>
         </div>

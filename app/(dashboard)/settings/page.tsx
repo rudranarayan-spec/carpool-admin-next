@@ -190,7 +190,7 @@ export default function SettingsPage() {
                   >
                     <option value="USD ($)">USD ($)</option>
                     <option value="EUR (€)">EUR (€)</option>
-                    <option value="INR (₹)">INR (₹)</option>
+                    <option value="INR ($)">INR ($)</option>
                   </select>
                 </div>
               </div>

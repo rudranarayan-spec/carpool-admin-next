@@ -6,9 +6,9 @@ export interface Driver {
 }
 
 export interface Vehicle {
-  vehicle_model: string;
-  vehicle_registration_number: string;
-  vehicle_fuel_type: string;
+  model: string;
+  registration_number: string;
+  fuel_type: string;
   vehicle_color?: string;
 }
 
@@ -143,3 +143,89 @@ export interface FetchPassengerRidesResponse {
   data: PassengerRideItem[];
 }
 
+export interface RideDetailsAdminHeader {
+  ride_code: string;
+  status: string;
+  created_at: string;
+}
+
+export interface RouteScheduleLocation {
+  location: string;
+  scheduled_at?: string;
+  estimated_arrival?: string;
+}
+
+export interface RouteScheduleMetrics {
+  distance_km: string;
+  duration_mins: string;
+  seat_price: number;
+  occupancy: string;
+}
+
+export interface RouteSchedule {
+  pickup: RouteScheduleLocation;
+  dropoff: RouteScheduleLocation;
+  metrics: RouteScheduleMetrics;
+}
+
+export interface AdminDriverDetails {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  profile_picture: string | null;
+  rating: number;
+  total_rides: number;
+}
+
+export interface AdminVehicleDetails {
+  id: number;
+  title: string;
+  type: string;
+  registration_number: string;
+}
+
+export interface DriverVehicleDetails {
+  driver: AdminDriverDetails;
+  vehicle: AdminVehicleDetails;
+}
+
+export interface PassengerBooking {
+  booking_id: number;
+  passenger_name: string;
+  passenger_phone: string;
+  seats: number;
+  pickup_location: string;
+  dropoff_location: string;
+  amount_paid: number;
+  booking_status: string;
+  payment_status: string;
+}
+
+export interface FinancialBreakup {
+  total_revenue: number;
+  platform_fee: number;
+  driver_payout: number;
+  gst_tax: number;
+}
+
+export interface ActivityLog {
+  title: string;
+  description: string;
+  timestamp: string;
+}
+
+export interface AdminRideDetailsData {
+  header: RideDetailsAdminHeader;
+  route_schedule: RouteSchedule;
+  driver_vehicle: DriverVehicleDetails;
+  passenger_bookings: PassengerBooking[];
+  financial_breakup: FinancialBreakup;
+  activity_logs: ActivityLog[];
+}
+
+export interface FetchAdminRideDetailsResponse {
+  success: boolean;
+  message: string;
+  data: AdminRideDetailsData;
+}

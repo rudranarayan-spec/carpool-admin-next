@@ -1,7 +1,9 @@
 import { apiClient } from "@/lib/api";
 import axios from "axios";
 import {
+  AdminRideDetailsData,
   CreateRidePayload,
+  FetchAdminRideDetailsResponse,
   FetchPassengerRidesResponse,
   FetchRidesResponse,
   FetchSingleRideResponse,
@@ -116,6 +118,23 @@ export const RideService = {
       throw new Error("Failed to fetch passenger rides");
     } catch (error: unknown) {
       console.error(`Error fetching rides for passenger #${passengerId}:`, parseApiError(error));
+      throw error;
+    }
+  },
+
+  getAdminRideDetails: async (rideId: number | string): Promise<AdminRideDetailsData> => {
+    try {
+      const response = await apiClient.get<FetchAdminRideDetailsResponse>(
+        `/rides/details/${rideId}`
+      );
+
+      if (response.data.success) {
+        return response.data.data;
+      }
+
+      throw new Error(response.data.message || "Failed to fetch admin ride details");
+    } catch (error: unknown) {
+      console.error(`Error fetching admin ride details for #${rideId}:`, parseApiError(error));
       throw error;
     }
   },

@@ -240,7 +240,7 @@ export default function RideManagementPage() {
   // Safe Formatters
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return isNaN(num) ? "₹0.00" : `₹${num.toFixed(2)}`;
+    return isNaN(num) ? "$0.00" : `$${num.toFixed(2)}`;
   };
 
   const formatDate = (isoString?: string) => {
@@ -285,8 +285,8 @@ export default function RideManagementPage() {
       ride.driver_phone.includes(query) ||
       ride.source_address.toLowerCase().includes(query) ||
       ride.destination_address.toLowerCase().includes(query) ||
-      ride.vehicle_model.toLowerCase().includes(query) ||
-      ride.vehicle_registration_number.toLowerCase().includes(query);
+      ride.model.toLowerCase().includes(query) ||
+      ride.registration_number.toLowerCase().includes(query);
 
     const matchesStatus =
       selectedFilter === "All" ||
@@ -493,10 +493,10 @@ export default function RideManagementPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-gray-700 dark:text-gray-300 font-medium capitalize">
-                              {ride.vehicle_model}
+                              {ride.model}
                             </div>
                             <div className="text-xs text-gray-400 uppercase">
-                              {ride.vehicle_registration_number}
+                              {ride.registration_number}
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -584,8 +584,8 @@ export default function RideManagementPage() {
                               {ride.driver_name}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                              {ride.vehicle_model} •{" "}
-                              {ride.vehicle_registration_number}
+                              {ride.model} •{" "}
+                              {ride.registration_number}
                             </p>
                           </div>
                         </div>
@@ -855,7 +855,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
-                            {selectedRide.vehicle_model}
+                            {selectedRide.model}
                           </p>
                         </div>
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
@@ -866,7 +866,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs uppercase truncate">
-                            {selectedRide.vehicle_registration_number}
+                            {selectedRide.registration_number}
                           </p>
                         </div>
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
@@ -877,7 +877,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
-                            {selectedRide.vehicle_fuel_type}
+                            {selectedRide.fuel_type}
                           </p>
                         </div>
                       </div>

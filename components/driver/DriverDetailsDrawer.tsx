@@ -242,7 +242,7 @@ export function DriverDetailsDrawer({
                             <IndianRupee className="w-3 h-3" /> Earned
                           </p>
                           <p className="text-base font-black text-slate-900 dark:text-white truncate">
-                            ₹{(driver.total_earnings || 0).toLocaleString("en-IN")}
+                            ${(driver.total_earnings || 0).toLocaleString("en-IN")}
                           </p>
                         </div>
 
@@ -347,7 +347,7 @@ export function DriverDetailsDrawer({
                                     #{ride.id}
                                   </span>
                                   <span className="text-xs font-black text-emerald-500">
-                                    ₹{ride.price_per_seat}
+                                    ${ride.price_per_seat}
                                   </span>
                                 </div>
                                 <div className="space-y-1.5 text-xs">
