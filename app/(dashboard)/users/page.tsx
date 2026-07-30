@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 import {
   Users,
   Search,
@@ -20,12 +21,16 @@ import {
   MapPin,
   Building,
   CreditCard,
+  ChevronRight,
+  User,
+  AlertTriangle,
+  Zap,
 } from "lucide-react";
 import userService, {
   UserListItem,
   UserDetails,
   UserStats,
-} from "@/services/userService"; // Adjust path if needed
+} from "@/services/userService";
 import Image from "next/image";
 
 export default function UserManagementPage() {
@@ -40,13 +45,14 @@ export default function UserManagementPage() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [drawerLoading, setDrawerLoading] = useState<boolean>(false);
+  const [actionProcessing, setActionProcessing] = useState<boolean>(false);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
-  // Selected User State for Drawer Modal
+  // Selected User State for Quick Action Drawer Modal
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
 
@@ -80,15 +86,16 @@ export default function UserManagementPage() {
     return () => clearTimeout(timer);
   }, [fetchUsersData]);
 
-  // 2. Fetch User Details for Modal Drawer
-  const handleUserClick = async (userId: number) => {
+  // 2. Fetch User Details for Quick Action Drawer
+  const handleQuickActionClick = async (e: React.MouseEvent, userId: number) => {
+    e.stopPropagation(); // Prevent trigger if clicking surrounding row elements
     setSelectedUserId(userId);
     try {
       setDrawerLoading(true);
       const userDetail = await userService.getUserDetails(userId);
       setSelectedUserDetails(userDetail);
     } catch (error) {
-      console.error("Error fetching user details:", error);
+      console.error("Error fetching quick action user details:", error);
     } finally {
       setDrawerLoading(false);
     }
@@ -136,7 +143,7 @@ export default function UserManagementPage() {
             User & KYC Verification
           </h1>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-            Manage passenger accounts, driver credentials, and legal compliance.
+            Manage passenger accounts, driver credentials, and platform safety enforcement.
           </p>
         </div>
 
@@ -150,7 +157,7 @@ export default function UserManagementPage() {
         </button>
       </div>
 
-      {/* Metrics Row from API Data */}
+      {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-4 bg-white dark:bg-[#090C10] rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
           <p className="text-xs font-bold text-gray-500 dark:text-gray-400">Total Users</p>
@@ -211,10 +218,11 @@ export default function UserManagementPage() {
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap capitalize ${isActive
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                  }`}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap capitalize ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                }`}
               >
                 {tab === "active" ? "Verified" : tab}
               </button>
@@ -248,11 +256,10 @@ export default function UserManagementPage() {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    onClick={() => handleUserClick(user.id)}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer group"
+                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition group"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/users/${user.id}`} className="flex items-center gap-3 group-hover:opacity-90">
                         {user.profile_picture ? (
                           <Image
                             src={user.profile_picture}
@@ -267,14 +274,15 @@ export default function UserManagementPage() {
                           </div>
                         )}
                         <div>
-                          <p className="font-bold text-gray-900 dark:text-white">
+                          <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition flex items-center gap-1.5">
                             {user.name}
+                            <ChevronRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             {user.email} • <span className="font-mono text-blue-600 dark:text-blue-400">{user.custom_id}</span>
                           </p>
                         </div>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10">
@@ -295,9 +303,26 @@ export default function UserManagementPage() {
                       })}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <button className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition">
-                        Review Profile
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Quick Action Drawer Trigger */}
+                        <button
+                          onClick={(e) => handleQuickActionClick(e, user.id)}
+                          className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition flex items-center gap-1.5"
+                          title="Quick Admin Actions"
+                        >
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                          Quick Actions
+                        </button>
+
+                        {/* Direct Link to Full User Profile */}
+                        <Link
+                          href={`/users/${user.id}`}
+                          className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 shadow-md shadow-blue-600/20 transition flex items-center gap-1"
+                        >
+                          Full Profile
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -313,7 +338,7 @@ export default function UserManagementPage() {
         </div>
       </div>
 
-      {/* 4. User Details Drawer Modal */}
+      {/* 4. Quick Action Drawer Modal */}
       <AnimatePresence>
         {selectedUserId && (
           <>
@@ -330,22 +355,25 @@ export default function UserManagementPage() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-full sm:w-[500px] bg-white dark:bg-[#090C10] border-l border-gray-200 dark:border-white/10 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] bg-white dark:bg-[#090C10] border-l border-gray-200 dark:border-white/10 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl flex flex-col justify-between"
             >
               {drawerLoading || !selectedUserDetails ? (
                 <div className="h-full flex flex-col items-center justify-center gap-3 text-gray-400">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                  <p className="text-xs font-bold">Fetching user details...</p>
+                  <p className="text-xs font-bold">Loading quick control panel...</p>
                 </div>
               ) : (
-                <>
-                  {/* Modal Header */}
+                <div className="space-y-6">
+                  {/* Drawer Header */}
                   <div className="flex items-center justify-between border-b border-gray-200 dark:border-white/10 pb-4">
                     <div>
-                      <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                        User Inspection
-                      </h2>
-                      <p className="text-xs font-mono text-blue-600 dark:text-blue-400">
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                        <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                          Admin Quick Controls
+                        </h2>
+                      </div>
+                      <p className="text-xs font-mono text-blue-600 dark:text-blue-400 mt-0.5">
                         {selectedUserDetails.custom_id}
                       </p>
                     </div>
@@ -357,98 +385,75 @@ export default function UserManagementPage() {
                     </button>
                   </div>
 
-                  {/* Status Header */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10">
-                    <div>
-                      <p className="text-xs text-gray-400 font-medium">Account Status</p>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5 capitalize">
-                        {selectedUserDetails.status}
-                      </p>
-                    </div>
-                    {renderStatusBadge(selectedUserDetails.status)}
-                  </div>
-
-                  {/* Profile Details */}
-                  <div className="space-y-3">
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                      Account Details
-                    </h3>
-                    <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-3 text-sm">
-                      <div className="flex items-center gap-3">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {selectedUserDetails.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          {selectedUserDetails.phone}
-                        </span>
-                      </div>
-                      {selectedUserDetails.user_details?.address && (
-                        <div className="flex items-center gap-3">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="font-semibold text-gray-900 dark:text-white">
-                            {selectedUserDetails.user_details.address},{" "}
-                            {selectedUserDetails.user_details.city}
-                          </span>
+                  {/* Summary Overview Header */}
+                  <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-3">
+                    <div className="flex items-center gap-3">
+                      {selectedUserDetails.profile_picture ? (
+                        <Image
+                          src={selectedUserDetails.profile_picture}
+                          alt={selectedUserDetails.name}
+                          width={44}
+                          height={44}
+                          className="w-11 h-11 rounded-full object-cover border border-gray-200 dark:border-white/10"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-blue-500/10 text-blue-600 font-bold flex items-center justify-center text-base border border-blue-500/20">
+                          {selectedUserDetails.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div className="flex items-center gap-3">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="font-semibold text-gray-900 dark:text-white">
-                          Registered on{" "}
-                          {new Date(selectedUserDetails.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Banking / Financial Information */}
-                  {selectedUserDetails.user_details?.bank_account_number && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Banking Details
-                      </h3>
-                      <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-2 text-xs">
-                        <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white">
-                          <Building className="w-4 h-4 text-gray-400" />
-                          {selectedUserDetails.user_details.bank_name}
-                        </div>
-                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                          <CreditCard className="w-4 h-4 text-gray-400" />
-                          Account: {selectedUserDetails.user_details.bank_account_number}
-                        </div>
-                        <p className="text-gray-500">
-                          IFSC: {selectedUserDetails.user_details.bank_account_ifsc}
+                      <div>
+                        <h3 className="font-extrabold text-gray-900 dark:text-white text-base">
+                          {selectedUserDetails.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {selectedUserDetails.role} • Joined {new Date(selectedUserDetails.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                  )}
+                    
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-white/10">
+                      <span className="text-xs font-bold text-gray-500">Current Status</span>
+                      {renderStatusBadge(selectedUserDetails.status)}
+                    </div>
+                  </div>
 
-                  {/* Verification Documents */}
-                  {selectedUserDetails.user_details?.driver_license && (
-                    <div className="space-y-3">
-                      <h3 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
-                        Verification Documents
-                      </h3>
-                      <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 space-y-2">
+                  {/* Quick Verification Document Review */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
+                      Verification Quick Review
+                    </h4>
+                    {selectedUserDetails.user_details?.driver_license ? (
+                      <div className="p-3.5 bg-blue-500/5 rounded-2xl border border-blue-500/20 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
+                            <ExternalLink className="w-3.5 h-3.5 text-blue-600" /> Driver&apos;s License Document
+                          </span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full">
+                            Submitted
+                          </span>
+                        </div>
                         <a
                           href={selectedUserDetails.user_details.driver_license}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                          className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-block"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          View Driving License Document
+                          Open document in new tab →
                         </a>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 text-xs text-gray-400">
+                        No pending verification documents submitted.
+                      </div>
+                    )}
+                  </div>
 
-                  {/* Quick Actions */}
-                  <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-2">
+                  {/* Immediate Action Buttons */}
+                  <div className="space-y-3 pt-2">
+                    <h4 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
+                      Administrative Actions
+                    </h4>
+
                     {selectedUserDetails.status !== "active" && (
                       <button
                         onClick={handleCloseDrawer}
@@ -469,7 +474,19 @@ export default function UserManagementPage() {
                       </button>
                     )}
                   </div>
-                </>
+
+                  {/* Navigation to Full Detailed View */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-white/10">
+                    <Link
+                      href={`/users/${selectedUserDetails.id}`}
+                      className="w-full py-3 px-4 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 border border-gray-200 dark:border-white/10"
+                    >
+                      <User className="w-4 h-4 text-blue-600" />
+                      View Full Profile & Financial History
+                      <ChevronRight className="w-4 h-4 ml-auto text-gray-400" />
+                    </Link>
+                  </div>
+                </div>
               )}
             </motion.div>
           </>
