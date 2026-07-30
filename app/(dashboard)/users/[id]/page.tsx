@@ -21,7 +21,7 @@ import {
   Fuel,
   CheckCircle2,
 } from 'lucide-react';
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import userService from '@/services/userService';
 import RideService from '@/services/ride.service';
 import { useQuery } from '@tanstack/react-query';
@@ -55,16 +55,14 @@ type TabType = 'overview' | 'rides' | 'bookings' | "vehicles" | 'documents' | 'p
 
 export default function UserDetailsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-
   const [payments, setPayments] = useState<typeof MOCK_PAYMENTS>([]);
-
   const [tabLoading, setTabLoading] = useState<boolean>(false);
   const [tabError, setTabError] = useState<string | null>(null);
+  const router = useRouter();
 
   const params = useParams();
 
   const userId = params.id as string;
-  console.log(userId)
 
 
   const {
@@ -291,7 +289,7 @@ export default function UserDetailsPage() {
             </div>
           </div>
 
-          <div className="bg-white bg-white dark:bg-[#050505] p-5 rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm">
+          <div className="bg-white dark:bg-[#050505] p-5 rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm">
             <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-sm">
               <span>Total Spent</span>
               <div className="p-2 bg-blue-50 dark:bg-blue-950/50 rounded-xl text-blue-600 dark:text-blue-400">
@@ -546,7 +544,10 @@ export default function UserDetailsPage() {
                           return (
                             <tr
                               key={ride.id}
-                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                              onClick={() => {
+                                  router.push(`/rides/${ride.id}`);
+                                }}
+                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer"
                             >
                               {/* Route */}
                               <td className="p-4 font-medium">
