@@ -93,3 +93,29 @@ export interface UpdateVehicleStatusResponse {
   message?: string;
   data?: VehicleDetail;
 }
+
+export interface Vehicle {
+  id: number;
+  driver_id: number;
+  model: string;
+  registration_number: string;
+  fuel_type: string;
+  color: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface APIResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+  error?: string;
+}
+
+export interface UserVehiclesResponse {
+  success: boolean;
+  message?: string;
+  data: VehicleListItem[]; 
+}
+

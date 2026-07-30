@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import {
   Search,
   MapPin,
@@ -247,10 +249,10 @@ export default function RideManagementPage() {
     return isNaN(date.getTime())
       ? "N/A"
       : date.toLocaleDateString("en-IN", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        });
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
   };
 
   const formatTime = (timeString?: string) => {
@@ -408,11 +410,10 @@ export default function RideManagementPage() {
                 <button
                   key={tab}
                   onClick={() => setSelectedFilter(tab)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    isActive
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
                       ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
                       : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>
@@ -710,7 +711,16 @@ export default function RideManagementPage() {
                           Current Status
                         </span>
                       </div>
-                      <div>{getStatusBadge(selectedRide.status)}</div>
+                      <div className="flex items-center gap-3">
+                        {getStatusBadge(selectedRide.status)}
+                        <Link
+                          href={`/rides/${selectedRide.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-amber-700 dark:text-white dark:hover:text-blue-300 transition-colors"
+                        >
+                          View Details
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </div>
 
                     {/* Route & Schedule Info (Amber / Orange Theme) */}

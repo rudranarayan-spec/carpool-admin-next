@@ -84,6 +84,7 @@ export const RideService = {
     }
   },
 
+  // Rides published by drived
   getRidesByDriverId: async (driverId: number | string): Promise<DriverRideItem[]> => {
     try {
       const response = await apiClient.get<FetchDriverRidesResponse>(
@@ -101,6 +102,7 @@ export const RideService = {
     }
   },
 
+  // Rides booked by passenger 
   getRidesByPassengerId: async (passengerId: number | string): Promise<PassengerRideItem[]> => {
     try {
       const response = await apiClient.get<FetchPassengerRidesResponse>(

@@ -25,6 +25,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // --- Types & Interfaces ---
 
@@ -213,11 +214,12 @@ function StatusBadge({ status }: { status: RideStatus }) {
 
 export default function RideDetailsPage() {
   const [ride] = useState<RideDetailData>(MOCK_RIDE_DETAILS);
+  const router = useRouter()
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090D16] text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        
+
         {/* Top Header / Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-[#121824] p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-sm">
           <div className="flex items-center gap-4">
@@ -249,10 +251,10 @@ export default function RideDetailsPage() {
 
         {/* Main Grid Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
+
           {/* LEFT & CENTER COLUMN (2 Cols) */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Route & Trip Overview Card */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -462,7 +464,9 @@ export default function RideDetailsPage() {
                 <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Car className="w-4 h-4 text-indigo-500" /> Driver & Vehicle
                 </h2>
-                <span className="text-xs font-bold text-blue-500 flex items-center gap-1 cursor-pointer hover:underline">
+                <span className="text-xs font-bold text-blue-500 flex items-center gap-1 cursor-pointer hover:underline" onClick={() => {
+                  router.push(`/users/${ride.id}`);
+                }}>
                   View Profile <ExternalLink className="w-3 h-3" />
                 </span>
               </div>

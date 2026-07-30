@@ -31,7 +31,7 @@ import {
 const navItems = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
   { name: "Ride Management", href: "/rides", icon: Car },
-  { name: "Driver Approvals", href: "/drivers", icon: UserCheck, badge: "12" },
+  { name: "Driver Approvals", href: "/drivers", icon: UserCheck },
   { name: "Users", href: "/users", icon: ShieldCheck },
   { name: "Financials", href: "/financials", icon: Wallet },
   { name: "Vehicle Approvals", href: "/vehicles", icon: Truck },
@@ -200,11 +200,11 @@ export default function Sidebar() {
                     {!isCollapsed && <span className="text-sm">{item.name}</span>}
                   </div>
 
-                  {item.badge && !isCollapsed && (
+                  {/* {item.badge && !isCollapsed && (
                     <span className="z-10 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 dark:text-amber-400 text-amber-700 border border-amber-500/30">
                       {item.badge}
                     </span>
-                  )}
+                  )} */}
                 </Link>
               );
             })}

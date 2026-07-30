@@ -5,6 +5,7 @@ import {
   VehicleDetailResponse,
   UpdateVehicleStatusPayload,
   UpdateVehicleStatusResponse,
+  UserVehiclesResponse,
 } from "@/types/vehicle.types";
 
 export const vehicleService = {
@@ -16,6 +17,11 @@ export const vehicleService = {
 
   getVehicleById: async (id: number | string): Promise<VehicleDetailResponse> => {
     const response = await apiClient.get<VehicleDetailResponse>(`/vehicles/${id}`);
+    return response.data;
+  },
+
+  getVehiclesByUserId: async (userId: number | string): Promise<UserVehiclesResponse> => {
+    const response = await apiClient.get<UserVehiclesResponse>(`/vehicles/user/${userId}`);
     return response.data;
   },
 
