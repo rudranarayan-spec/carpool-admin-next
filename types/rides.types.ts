@@ -192,6 +192,7 @@ export interface DriverVehicleDetails {
 
 export interface PassengerBooking {
   booking_id: number;
+  booking_code: string;
   passenger_name: string;
   passenger_phone: string;
   seats: number;

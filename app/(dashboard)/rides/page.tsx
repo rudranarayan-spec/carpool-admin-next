@@ -240,7 +240,7 @@ export default function RideManagementPage() {
   // Safe Formatters
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === "string" ? parseFloat(amount) : amount;
-    return isNaN(num) ? "$0.00" : `$${num.toFixed(2)}`;
+    return isNaN(num) ? "₹0.00" : `₹${num.toFixed(2)}`;
   };
 
   const formatDate = (isoString?: string) => {

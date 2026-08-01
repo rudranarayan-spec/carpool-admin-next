@@ -27,35 +27,13 @@ import RideService from '@/services/ride.service';
 import { useQuery } from '@tanstack/react-query';
 import Image from 'next/image';
 import { vehicleService } from '@/services/vehicle.service';
+import { paymentService } from '@/services/paymentService';
 
-
-
-const MOCK_PAYMENTS = [
-  {
-    id: 'tx_9910',
-    type: 'Payout',
-    description: 'Earnings payout for Ride #rd_882',
-    amount: 70.0,
-    status: 'Completed',
-    date: 'Jul 26, 2026',
-    ref: 'PO-88219',
-  },
-  {
-    id: 'tx_9841',
-    type: 'Ride Payment',
-    description: 'Booking payment for Ride #rd_411',
-    amount: -18.0,
-    status: 'Completed',
-    date: 'Jun 18, 2026',
-    ref: 'BK-30211',
-  },
-];
 
 type TabType = 'overview' | 'rides' | 'bookings' | "vehicles" | 'documents' | 'payments';
 
 export default function UserDetailsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [payments, setPayments] = useState<typeof MOCK_PAYMENTS>([]);
   const [tabLoading, setTabLoading] = useState<boolean>(false);
   const [tabError, setTabError] = useState<string | null>(null);
   const router = useRouter();
@@ -97,7 +75,7 @@ export default function UserDetailsPage() {
     queryFn: () => RideService.getRidesByPassengerId(userId),
     enabled: !!userId && activeTab === "bookings",
   });
-  
+
   const {
     data: vehiclesResponse,
     isLoading: vehiclesLoading,
@@ -111,6 +89,18 @@ export default function UserDetailsPage() {
 
   const vehicles = vehiclesResponse?.data ?? [];
 
+  const {
+    data: paymentsResponse,
+    isLoading: paymentsLoading,
+    isError: paymentsError,
+    error: paymentsErrorData,
+  } = useQuery({
+    queryKey: ["user", userId, "payments"],
+    queryFn: () => paymentService.getPassengerTransactions({ passengerId: userId }),
+    enabled: !!userId && activeTab === "payments",
+  });
+
+  const userPayments = paymentsResponse?.data ?? [];
 
   // Fallback Mock Metrics / Bio (To be updated via backend later)
   const mockMetrics = {
@@ -545,8 +535,8 @@ export default function UserDetailsPage() {
                             <tr
                               key={ride.id}
                               onClick={() => {
-                                  router.push(`/rides/${ride.id}`);
-                                }}
+                                router.push(`/rides/${ride.id}`);
+                              }}
                               className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 cursor-pointer"
                             >
                               {/* Route */}
@@ -632,26 +622,24 @@ export default function UserDetailsPage() {
 
             {/* BOOKINGS TAB */}
             {activeTab === "bookings" && (
-              <div className="bg-white bg-white dark:bg-[#050505] rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm overflow-hidden">
-
+              <div className="bg-white dark:bg-[#050505] rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-200 dark:border-white/15">
-                  <h2 className="text-lg font-bold">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                     Passenger Bookings
                   </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Manage and review passenger ride reservations
+                  </p>
                 </div>
 
                 {bookedRidesLoading ? (
                   <div className="p-12 flex flex-col items-center justify-center gap-3 text-slate-500">
                     <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
-
-                    <p className="text-sm font-medium">
-                      Loading booked rides...
-                    </p>
+                    <p className="text-sm font-medium">Loading booked rides...</p>
                   </div>
                 ) : bookedRidesError ? (
                   <div className="p-8 text-center">
                     <AlertCircle className="w-8 h-8 mx-auto text-red-500 mb-3" />
-
                     <p className="text-sm font-medium text-red-500">
                       {bookedRidesErrorData instanceof Error
                         ? bookedRidesErrorData.message
@@ -661,16 +649,15 @@ export default function UserDetailsPage() {
                 ) : bookedRides.length === 0 ? (
                   <div className="p-12 text-center text-slate-500 dark:text-slate-400">
                     <Calendar className="w-10 h-10 mx-auto mb-3 opacity-40" />
-
-                    <p className="text-sm font-medium">
-                      No booked rides found.
-                    </p>
+                    <p className="text-sm font-medium">No booked rides found.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                       <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-white/15">
                         <tr>
+                          <th className="p-4 whitespace-nowrap">Booking Ref</th>
+                          <th className="p-4 whitespace-nowrap">Ride ID</th>
                           <th className="p-4">Route</th>
                           <th className="p-4">Driver</th>
                           <th className="p-4">Departure</th>
@@ -684,25 +671,41 @@ export default function UserDetailsPage() {
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                         {bookedRides.map((booking) => {
                           const totalPrice =
-                            Number(booking.price_per_seat) *
-                            booking.seats;
+                            Number(booking.price_per_seat || 0) * (booking.seats || 1);
 
                           return (
                             <tr
                               key={booking.booking_id}
-                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
                             >
-                              {/* Route */}
-                              <td className="p-4 font-medium">
-                                <div className="flex items-start gap-2">
-                                  <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                              {/* Booking Code / ID */}
+                              <td className="p-4 align-top">
+                                <div className="flex flex-col">
+                                  <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/40 w-fit">
+                                    {booking.booking_id || `BK-${booking.booking_id}`}
+                                  </span>
+                                  <span className="text-[11px] font-mono text-slate-400 mt-1">
+                                    ID: #{booking.booking_id}
+                                  </span>
+                                </div>
+                              </td>
 
+                              {/* Ride ID */}
+                              <td className="p-4 align-top">
+                                <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700/60 w-fit inline-block">
+                                  #{booking.ride_id}
+                                </span>
+                              </td>
+
+                              {/* Route */}
+                              <td className="p-4 font-medium align-top">
+                                <div className="flex items-start gap-2 max-w-[220px]">
+                                  <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                                   <div className="min-w-0">
-                                    <p className="truncate">
+                                    <p className="truncate text-slate-900 dark:text-slate-100 font-medium" title={booking.source_address}>
                                       {booking.source_address}
                                     </p>
-
-                                    <p className="text-xs text-slate-400 mt-1">
+                                    <p className="text-xs text-slate-400 truncate mt-0.5" title={booking.destination_address}>
                                       → {booking.destination_address}
                                     </p>
                                   </div>
@@ -710,53 +713,49 @@ export default function UserDetailsPage() {
                               </td>
 
                               {/* Driver */}
-                              <td className="p-4">
-                                <div className="font-medium">
+                              <td className="p-4 align-top">
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
                                   {booking.driver_name}
                                 </div>
-
-                                <div className="text-xs text-slate-400 mt-1">
+                                <div className="text-xs text-slate-400 mt-0.5">
                                   {booking.driver_phone}
                                 </div>
                               </td>
 
                               {/* Departure */}
-                              <td className="p-4">
-                                <div className="font-medium">
-                                  {new Date(
-                                    booking.ride_date
-                                  ).toLocaleDateString("en-US", {
+                              <td className="p-4 align-top whitespace-nowrap">
+                                <div className="font-medium text-slate-900 dark:text-slate-100">
+                                  {new Date(booking.ride_date).toLocaleDateString("en-US", {
                                     month: "short",
                                     day: "numeric",
                                     year: "numeric",
                                   })}
                                 </div>
-
-                                <div className="text-xs text-slate-500 mt-1">
+                                <div className="text-xs text-slate-400 mt-0.5">
                                   {booking.departure_time}
                                 </div>
                               </td>
 
                               {/* Seats */}
-                              <td className="p-4">
+                              <td className="p-4 align-top text-center font-medium">
                                 {booking.seats}
                               </td>
 
-                              {/* Total */}
-                              <td className="p-4 font-semibold">
-                                ${totalPrice.toFixed(2)}
+                              {/* Total Price */}
+                              <td className="p-4 align-top font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                                ₹{totalPrice.toFixed(2)}
                               </td>
 
                               {/* Ride Status */}
-                              <td className="p-4">
-                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize">
+                              <td className="p-4 align-top">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 capitalize border border-slate-200 dark:border-slate-700">
                                   {booking.ride_status}
                                 </span>
                               </td>
 
                               {/* Booking Status */}
-                              <td className="p-4">
-                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 capitalize">
+                              <td className="p-4 align-top">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50 capitalize">
                                   {booking.booking_status}
                                 </span>
                               </td>
@@ -1047,49 +1046,133 @@ export default function UserDetailsPage() {
             )}
 
             {/* PAYMENTS TAB */}
+            {/* PAYMENTS TAB */}
             {activeTab === 'payments' && (
-              <div className="bg-white bg-white dark:bg-[#050505] rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-[#050505] rounded-2xl border border-slate-200 dark:border-white/15 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-200 dark:border-white/15 flex justify-between items-center">
-                  <h2 className="text-lg font-bold">Transaction History</h2>
+                  <div>
+                    <h2 className="text-lg font-bold">Transaction History</h2>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500 mt-0.5">
+                      Payment transactions and booking history for {userData.name}
+                    </p>
+                  </div>
+
                   <button className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
                     <Download className="w-4 h-4" /> Export CSV
                   </button>
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-white/15">
-                      <tr>
-                        <th className="p-4">Reference</th>
-                        <th className="p-4">Type</th>
-                        <th className="p-4">Description</th>
-                        <th className="p-4">Date</th>
-                        <th className="p-4">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {payments.map((tx) => (
-                        <tr key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="p-4 font-mono text-xs text-slate-400">{tx.ref}</td>
-                          <td className="p-4 font-medium">{tx.type}</td>
-                          <td className="p-4 text-slate-600 dark:text-slate-300">
-                            {tx.description}
-                          </td>
-                          <td className="p-4 text-slate-500">{tx.date}</td>
-                          <td
-                            className={`p-4 font-bold ${tx.amount > 0
-                              ? 'text-emerald-600 dark:text-emerald-400'
-                              : 'text-slate-800 dark:text-slate-200'
-                              }`}
-                          >
-                            {tx.amount > 0
-                              ? `+$${tx.amount.toFixed(2)}`
-                              : `-$${Math.abs(tx.amount).toFixed(2)}`}
-                          </td>
+
+                {paymentsLoading ? (
+                  <div className="p-12 flex flex-col items-center justify-center gap-3 text-slate-500">
+                    <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
+                    <p className="text-sm font-medium">Loading payment transactions...</p>
+                  </div>
+                ) : paymentsError ? (
+                  <div className="p-8 text-center">
+                    <AlertCircle className="w-8 h-8 mx-auto text-red-500 mb-3" />
+                    <p className="text-sm font-medium text-red-500">
+                      {paymentsErrorData instanceof Error
+                        ? paymentsErrorData.message
+                        : "Failed to load payment history."}
+                    </p>
+                  </div>
+                ) : userPayments.length === 0 ? (
+                  <div className="p-12 text-center text-slate-500 dark:text-slate-400">
+                    <CreditCard className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                    <p className="text-sm font-medium">No payment transactions found for this user.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 font-semibold border-b border-slate-200 dark:border-white/15">
+                        <tr>
+                          <th className="p-4">Booking Code</th>
+                          <th className="p-4">Route</th>
+                          <th className="p-4">Gateway / Order ID</th>
+                          <th className="p-4">Date</th>
+                          <th className="p-4">Amount</th>
+                          <th className="p-4">Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                        {userPayments.map((tx) => {
+                          const isPaid = tx.payment_status.toLowerCase() === 'paid';
+                          const isRefunded = tx.payment_status.toLowerCase() === 'refunded';
+
+                          return (
+                            <tr
+                              key={tx.payment_table_id}
+                              className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
+                            >
+                              {/* Booking Code */}
+                              <td className="p-4">
+                                <div className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                                  {tx.booking_code}
+                                </div>
+                                <div className="text-[11px] text-slate-400 mt-0.5">
+                                  Booking #{tx.booking_id}
+                                </div>
+                              </td>
+
+                              {/* Route */}
+                              <td className="p-4">
+                                <div className="font-medium text-slate-900 dark:text-slate-100 min-w-0 max-w-[240px] truncate">
+                                  {tx.ride_source}
+                                </div>
+                                <div className="text-xs text-slate-400 truncate">
+                                  → {tx.ride_destination}
+                                </div>
+                              </td>
+
+                              {/* Gateway & Order / Payment ID */}
+                              <td className="p-4">
+                                <div className="capitalize font-medium text-xs text-slate-700 dark:text-slate-300">
+                                  {tx.payment_gateway}
+                                </div>
+                                <div className="font-mono text-[11px] text-slate-400 mt-0.5 truncate max-w-[160px]" title={tx.payment_id || tx.order_id}>
+                                  {tx.payment_id || tx.order_id || 'N/A'}
+                                </div>
+                              </td>
+
+                              {/* Date */}
+                              <td className="p-4 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">
+                                {new Date(tx.payment_created_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </td>
+
+                              {/* Total Price */}
+                              <td className="p-4 font-bold text-slate-900 dark:text-slate-100">
+                                ₹{Number(tx.total_price).toFixed(2)}
+                                <span className="block text-[10px] font-normal text-slate-400">
+                                  {tx.seats} {tx.seats === 1 ? 'seat' : 'seats'}
+                                </span>
+                              </td>
+
+                              {/* Payment Status */}
+                              <td className="p-4">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize border ${isPaid
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-400 dark:border-emerald-800'
+                                    : isRefunded
+                                      ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-400 dark:border-blue-800'
+                                      : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-400 dark:border-amber-800'
+                                    }`}
+                                >
+                                  {tx.payment_status}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </>

@@ -1,4 +1,4 @@
-// lib/axios.ts
+// lib/api.ts
 import axios from "axios";
 
 // Helper function to extract token from document cookies

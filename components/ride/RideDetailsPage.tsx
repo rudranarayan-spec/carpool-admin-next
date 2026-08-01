@@ -255,6 +255,7 @@ export default function RideDetailsPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200/80 dark:border-white/10 text-slate-400 font-extrabold uppercase tracking-wider">
+                      <th className="py-3 px-2">Booking ID</th>
                       <th className="py-3 px-2">Passenger</th>
                       <th className="py-3 px-2">Seats</th>
                       <th className="py-3 px-2">Pickup / Drop</th>
@@ -268,6 +269,14 @@ export default function RideDetailsPage() {
                         key={booking.booking_id}
                         className="hover:bg-slate-50/50 dark:hover:bg-white/1"
                       >
+                        <td className="py-3.5 px-2">
+                          <p className="font-bold text-slate-900 dark:text-white">
+                            {booking.booking_id}
+                          </p>
+                          <p className="text-[11px] font-mono text-slate-400">
+                            {booking.booking_code}
+                          </p>
+                        </td>
                         <td className="py-3.5 px-2">
                           <p className="font-bold text-slate-900 dark:text-white">
                             {booking.passenger_name}
