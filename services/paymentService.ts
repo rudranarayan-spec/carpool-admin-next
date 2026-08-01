@@ -1,54 +1,75 @@
 import { apiClient } from "@/lib/api";
-
-export interface PassengerTransaction {
-  payment_table_id: number;
-  booking_code: string;
-  booking_id: string;
-  order_id: string;
-  payment_id: string | null;
-  refund_id: string | null;
-  refunded_at: string | null;
-  payment_status: "paid" | "unpaid" | "failed" | "refunded" | string;
-  payment_gateway: string;
-  payment_created_at: string;
-  passenger_id: number;
-  ride_source: string;
-  ride_destination: string;
-  total_price: string;
-  seats: number;
-}
-
-export interface Pagination {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface GetPassengerTransactionsResponse {
-  success: boolean;
-  message: string;
-  data: PassengerTransaction[];
-  pagination: Pagination;
-}
-
-export interface GetPassengerTransactionsParams {
-  passengerId: string | number;
-  page?: number;
-  limit?: number;
-  status?: string;
-}
-
-// ==========================================
-// SERVICE API METHODS
-// ==========================================
+import {
+  GetAdminPaymentByIdResponse,
+  GetAdminPaymentsParams,
+  GetAdminPaymentsResponse,
+  GetPassengerTransactionsParams,
+  GetPassengerTransactionsResponse,
+  ProcessRefundPayload,
+  ProcessRefundResponse,
+  UpdatePaymentStatusPayload,
+  UpdatePaymentStatusResponse,
+} from "@/types/payment";
 
 export const paymentService = {
-  /**
-   * Fetch payment transaction history for a specific passenger
-   * 
-   * Endpoint: GET /payments/passenger/:passengerId
-   */
+  // Fetch list of payments with pagination, status, search filters
+  async getAdminPayments({
+    page = 1,
+    limit = 10,
+    status,
+    passengerId,
+    search,
+  }: GetAdminPaymentsParams = {}): Promise<GetAdminPaymentsResponse> {
+    const response = await apiClient.get<GetAdminPaymentsResponse>(
+      "/payments",
+      {
+        params: {
+          page,
+          limit,
+          status,
+          passengerId,
+          search,
+        },
+      },
+    );
+
+    return response.data;
+  },
+
+  async getAdminPaymentById(
+    paymentId: string | number,
+  ): Promise<GetAdminPaymentByIdResponse> {
+    const response = await apiClient.get<GetAdminPaymentByIdResponse>(
+      `/payments/${paymentId}`,
+    );
+
+    return response.data;
+  },
+
+  async updatePaymentStatus(
+    paymentId: string | number,
+    payload: UpdatePaymentStatusPayload,
+  ): Promise<UpdatePaymentStatusResponse> {
+    const response = await apiClient.patch<UpdatePaymentStatusResponse>(
+      `/payments/${paymentId}/`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // Initiate full or partial refund via Razorpay gateway
+  async processRefund(
+    paymentId: string | number,
+    payload: ProcessRefundPayload,
+  ): Promise<ProcessRefundResponse> {
+    const response = await apiClient.post<ProcessRefundResponse>(
+      `/payments/${paymentId}/refund`,
+      payload,
+    );
+
+    return response.data;
+  },
+
   async getPassengerTransactions({
     passengerId,
     page = 1,
@@ -63,7 +84,7 @@ export const paymentService = {
           limit,
           status,
         },
-      }
+      },
     );
 
     return response.data;
