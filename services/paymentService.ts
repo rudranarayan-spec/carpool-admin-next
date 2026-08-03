@@ -5,6 +5,8 @@ import {
   GetAdminPaymentsResponse,
   GetPassengerTransactionsParams,
   GetPassengerTransactionsResponse,
+  GetRefundRequestsParams,
+  GetRefundRequestsResponse,
   ProcessRefundPayload,
   ProcessRefundResponse,
   UpdatePaymentStatusPayload,
@@ -89,4 +91,11 @@ export const paymentService = {
 
     return response.data;
   },
+
+  async getRefundRequests(params?: GetRefundRequestsParams): Promise<GetRefundRequestsResponse> {
+    const response = await apiClient.get("/refund-requests", { params });
+    return response.data;
+  },
+
+  
 };

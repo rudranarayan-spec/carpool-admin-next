@@ -255,7 +255,7 @@ export function DriverDetailsDrawer({
                           </p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
+                        <div className="p-3.5 rounded-2xl bg-linear-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
                           <p className="text-[10px] uppercase tracking-wider font-extrabold text-purple-600 dark:text-purple-400 flex items-center gap-1 mb-1">
                             <Car className="w-3 h-3" /> Vehicles
                           </p>
@@ -271,7 +271,7 @@ export function DriverDetailsDrawer({
                           Contact Details
                         </h3>
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5">
+                          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5">
                             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
                               <Mail className="w-4 h-4" />
                             </div>
@@ -340,7 +340,7 @@ export function DriverDetailsDrawer({
                                   onClose();
                                   router.push(`/rides/${ride.id}`);
                                 }}
-                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2"
+                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5 space-y-2"
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-mono font-bold text-slate-500">

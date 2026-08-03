@@ -127,15 +127,34 @@ export interface GetPassengerTransactionsParams {
 export interface RefundRequestItem {
   refund_table_id: number;
   booking_id: number;
-  refund_amount: number;
+  refund_amount: string;
   reason_of_refund: string;
-  refund_status: "requested" | "processing" | "processed" | "failed";
-  razorpay_refund_id: string | null;
+  refund_status: "pending" | "processed" | "rejected" | string;
+  razorpay_refund_id: string;
   requested_at: string;
   updated_at: string;
   booking_code: string;
   payment_db_id: number;
   razorpay_payment_id: string;
-  original_payment_amount: number;
+  original_payment_amount: string;
   payment_status: string;
+}
+
+export interface GetRefundRequestsResponse {
+  success: boolean;
+  message: string;
+  data: RefundRequestItem[];
+  pagination: {
+    totalRecords: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
+}
+
+export interface GetRefundRequestsParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  search?: string;
 }
