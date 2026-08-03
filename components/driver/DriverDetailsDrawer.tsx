@@ -204,8 +204,8 @@ export function DriverDetailsDrawer({
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-xl transition-colors duration-200 select-none z-10 ${isActive
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                     >
                       {isActive && (
@@ -337,7 +337,7 @@ export function DriverDetailsDrawer({
                               <div
                                 key={ride.id}
                                 onClick={() => {
-                                  onClose(); 
+                                  onClose();
                                   router.push(`/rides/${ride.id}`);
                                 }}
                                 className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2"
@@ -395,10 +395,10 @@ export function DriverDetailsDrawer({
                               </div>
                               <span
                                 className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${doc.status === "verified"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                                    : doc.status === "rejected"
-                                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                  : doc.status === "rejected"
+                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                                   }`}
                               >
                                 {doc.status}

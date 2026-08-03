@@ -17,7 +17,7 @@ import {
   Ban
 } from "lucide-react";
 import { toast } from "sonner"; // Or "react-hot-toast"
-import { useDrivers, useUpdateDriverStatus } from "@/services/driver.service";
+import { useDrivers, useUpdateDriverActivityStatus } from "@/services/driver.service";
 import { PendingApprovalsDrawer } from "@/components/driver/pendingApprovalDrawer";
 import { DriverStatus } from "@/types/driver.types";
 import { DriverDetailsDrawer } from "@/components/driver/DriverDetailsDrawer";
@@ -56,7 +56,7 @@ export default function DriverManagementPage() {
   });
 
   // Status update mutation with Toast feedback
-  const updateStatusMutation = useUpdateDriverStatus();
+  const updateStatusMutation = useUpdateDriverActivityStatus();
 
   const drivers = data?.data || [];
   const pagination = data?.pagination;
@@ -226,7 +226,7 @@ export default function DriverManagementPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <th className="px-6 py-4">Driver Profile</th>
                 <th className="px-6 py-4">Contact</th>
                 <th className="px-6 py-4 text-center">Vehicles</th>
@@ -385,7 +385,6 @@ export default function DriverManagementPage() {
       <PendingApprovalsDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        pendingDrivers={pendingList}
       />
     </div>
   );

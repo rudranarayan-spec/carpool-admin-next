@@ -1,4 +1,5 @@
-// Shared Pagination Structure
+// types/payment.ts
+
 export interface Pagination {
   total: number;
   page: number;
@@ -6,16 +7,15 @@ export interface Pagination {
   totalPages: number;
 }
 
-// ------------------------------------------
-// Admin Payments Endpoint Types
-// ------------------------------------------
-
-/** Raw Payment Transaction object returned by GET /admin/payments */
 export interface PaymentTransactionRaw {
   id: number;
   booking_code: string;
   booking_id: string;
   order_id: string;
+  ride_id?: string | number | null;
+  seat_booked?: number | null;
+  source?: string | null;
+  destination?: string | null;
   payment_id: string | null;
   amount: number;
   refund_id: string | null;
@@ -26,6 +26,7 @@ export interface PaymentTransactionRaw {
     | "failed"
     | "refunded"
     | "partially_refunded"
+    | "refund_requested"
     | string;
   payment_gateway: string;
   created_at: string;
@@ -39,6 +40,7 @@ export interface PaymentStats {
   platform_percent: number;
   driver_percent: number;
 }
+
 export interface GetAdminPaymentsResponse {
   success: boolean;
   message: string;
@@ -55,16 +57,11 @@ export interface GetAdminPaymentsParams {
   search?: string;
 }
 
-/** Response for GET /admin/payments/:id */
 export interface GetAdminPaymentByIdResponse {
   success: boolean;
   message: string;
   data: PaymentTransactionRaw;
 }
-
-// ------------------------------------------
-// Update Payment Status Types (PATCH)
-// ------------------------------------------
 
 export interface UpdatePaymentStatusPayload {
   payment_status: string;
@@ -76,10 +73,6 @@ export interface UpdatePaymentStatusResponse {
   success: boolean;
   message: string;
 }
-
-// ------------------------------------------
-// Process Refund Types (POST)
-// ------------------------------------------
 
 export interface ProcessRefundPayload {
   refund_amount?: number;
@@ -99,11 +92,6 @@ export interface ProcessRefundResponse {
   data: ProcessRefundResponseData;
 }
 
-// ------------------------------------------
-// Passenger Transactions Endpoint Types
-// ------------------------------------------
-
-/** Passenger Transaction object returned by GET /payments/passenger/:passengerId */
 export interface PassengerTransaction {
   payment_table_id: number;
   booking_code: string;
@@ -134,4 +122,20 @@ export interface GetPassengerTransactionsParams {
   page?: number;
   limit?: number;
   status?: string;
+}
+
+export interface RefundRequestItem {
+  refund_table_id: number;
+  booking_id: number;
+  refund_amount: number;
+  reason_of_refund: string;
+  refund_status: "requested" | "processing" | "processed" | "failed";
+  razorpay_refund_id: string | null;
+  requested_at: string;
+  updated_at: string;
+  booking_code: string;
+  payment_db_id: number;
+  razorpay_payment_id: string;
+  original_payment_amount: number;
+  payment_status: string;
 }

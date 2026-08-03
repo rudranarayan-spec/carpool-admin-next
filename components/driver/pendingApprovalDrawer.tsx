@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner"; // 1. Import toast from sonner
+import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   X,
   CheckCircle2,
@@ -19,7 +20,8 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react";
-import { Driver, useUpdateDriverStatus } from "@/services/driver.service";
+import { DriverApproval } from "@/services/driver.service";
+import { Driver } from "@/types/driver.types";
 
 interface DriverDocument {
   id: string;
@@ -29,66 +31,73 @@ interface DriverDocument {
   status: "pending" | "approved" | "rejected";
 }
 
-const DEFAULT_DOCUMENTS: DriverDocument[] = [
-  { id: "doc-1", name: "Driving License (Front & Back)", type: "license", url: "#", status: "pending" },
-  { id: "doc-2", name: "Vehicle Insurance Policy", type: "insurance", url: "#", status: "pending" },
-  { id: "doc-3", name: "Vehicle Registration Card (RC)", type: "registration", url: "#", status: "pending" },
-];
-
 interface PendingApprovalsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  pendingDrivers: Driver[];
 }
 
 export function PendingApprovalsDrawer({
   isOpen,
   onClose,
-  pendingDrivers,
 }: PendingApprovalsDrawerProps) {
-  const updateStatus = useUpdateDriverStatus();
+  const queryClient = useQueryClient();
 
-  const [docStatuses, setDocStatuses] = useState<
-    Record<number, Record<string, "approved" | "rejected" | "pending">>
-  >({});
+  // Fetch pending drivers using DriverApproval.getPendingDrivers service
+  const { data: pendingData, isLoading: isFetchingPending } = useQuery({
+    queryKey: ["pending-drivers"],
+    queryFn: () => DriverApproval.getPendingDrivers(),
+    enabled: isOpen, // Only fetch when the drawer is open
+  });
 
-  const [expandedDriverId, setExpandedDriverId] = useState<number | null>(
-    pendingDrivers[0]?.id || null
-  );
+  const pendingDrivers: Driver[] = pendingData?.data || [];
+
+  // Expanded card state
+  const [expandedDriverId, setExpandedDriverId] = useState<number | null>(null);
+
+  // TanStack Query mutation for individual document verification
+  const verifyDocMutation = useMutation({
+    mutationFn: DriverApproval.verifyDocument,
+    onSuccess: (_, variables) => {
+      toast.success(`Document marked as ${variables.status}`);
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-drivers"] });
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (error: any) => {
+      toast.error(
+        `Failed to update document: ${error?.message || "Something went wrong"}`
+      );
+    },
+  });
+
+  // TanStack Query mutation for driver status update using DriverApproval.updateDriverStatus
+  const updateStatusMutation = useMutation({
+    mutationFn: DriverApproval.updateDriverStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-drivers"] });
+    },
+  });
 
   const handleDocStatusChange = (
     driverId: number,
-    docId: string,
-    docName: string,
-    status: "approved" | "rejected"
+    docType: "license" | "insurance" | "registration" | "background_check",
+    currentStatus: "approved" | "rejected" | "pending",
+    targetStatus: "approved" | "rejected"
   ) => {
-    setDocStatuses((prev) => {
-      const currentDriverDocs = prev[driverId] || {};
-      const newStatus = currentDriverDocs[docId] === status ? "pending" : status;
+    const newStatus = currentStatus === targetStatus ? "pending" : targetStatus;
 
-      // Toast feedback for individual document state changes
-      if (newStatus === "approved") {
-        toast.success(`Marked "${docName}" as approved`);
-      } else if (newStatus === "rejected") {
-        toast.warning(`Marked "${docName}" as rejected`);
-      } else {
-        toast.info(`Reset "${docName}" to pending`);
-      }
-
-      return {
-        ...prev,
-        [driverId]: {
-          ...currentDriverDocs,
-          [docId]: newStatus,
-        },
-      };
+    verifyDocMutation.mutate({
+      driverId,
+      docType,
+      status: newStatus,
     });
   };
 
   const handleApprove = (driver: Driver) => {
     const toastId = toast.loading(`Approving ${driver.name}...`);
 
-    updateStatus.mutate(
+    updateStatusMutation.mutate(
       { driverId: driver.id, status: "active" },
       {
         onSuccess: () => {
@@ -96,7 +105,8 @@ export function PendingApprovalsDrawer({
             id: toastId,
           });
         },
-        onError: (error) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
           toast.error(
             `Failed to approve driver: ${error?.message || "Unknown error"}`,
             { id: toastId }
@@ -109,7 +119,7 @@ export function PendingApprovalsDrawer({
   const handleReject = (driver: Driver) => {
     const toastId = toast.loading(`Rejecting ${driver.name}...`);
 
-    updateStatus.mutate(
+    updateStatusMutation.mutate(
       { driverId: driver.id, status: "blocked" },
       {
         onSuccess: () => {
@@ -117,7 +127,8 @@ export function PendingApprovalsDrawer({
             id: toastId,
           });
         },
-        onError: (error) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onError: (error: any) => {
           toast.error(
             `Failed to reject driver: ${error?.message || "Unknown error"}`,
             { id: toastId }
@@ -146,7 +157,7 @@ export function PendingApprovalsDrawer({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 bottom-0 w-full sm:w-[540px] bg-white dark:bg-[#090C10] border-l border-gray-200 dark:border-white/10 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl flex flex-col justify-between"
+            className="fixed top-0 right-0 bottom-0 w-full sm:w-135 bg-white dark:bg-[#090C10] border-l border-gray-200 dark:border-white/10 z-50 p-6 overflow-y-auto space-y-6 shadow-2xl flex flex-col justify-between"
           >
             <div className="space-y-6">
               {/* Header */}
@@ -174,27 +185,38 @@ export function PendingApprovalsDrawer({
 
               {/* Pending List */}
               <div className="space-y-4">
-                {pendingDrivers.length > 0 ? (
+                {isFetchingPending ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-400 text-sm gap-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                    <span>Loading pending approvals...</span>
+                  </div>
+                ) : pendingDrivers.length > 0 ? (
                   pendingDrivers.map((driver) => {
-                    const isExpanded = expandedDriverId === driver.id;
-                    const driverDocState = docStatuses[driver.id] || {};
+                    const isExpanded =
+                      expandedDriverId === driver.id ||
+                      (expandedDriverId === null &&
+                        pendingDrivers[0]?.id === driver.id);
 
+                    // Real backend documents array from driver model
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const docsList = (driver as any).documents || DEFAULT_DOCUMENTS;
+                    const docsList: DriverDocument[] =
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      (driver as any).documents || [];
                     const approvedCount = docsList.filter(
-                      (d: DriverDocument) => driverDocState[d.id] === "approved"
+                      (d) => d.status === "approved"
                     ).length;
                     const rejectedCount = docsList.filter(
-                      (d: DriverDocument) => driverDocState[d.id] === "rejected"
+                      (d) => d.status === "rejected"
                     ).length;
 
                     return (
                       <div
                         key={driver.id}
-                        className={`p-4 bg-gray-50 dark:bg-white/[0.03] rounded-2xl border transition-all space-y-4 ${isExpanded
+                        className={`p-4 bg-gray-50 dark:bg-white/3 rounded-2xl border transition-all space-y-4 ${
+                          isExpanded
                             ? "border-amber-500/40 shadow-lg"
                             : "border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20"
-                          }`}
+                        }`}
                       >
                         {/* Driver Card Header */}
                         <div className="flex justify-between items-start">
@@ -212,7 +234,9 @@ export function PendingApprovalsDrawer({
                             </span>
                             <button
                               onClick={() =>
-                                setExpandedDriverId(isExpanded ? null : driver.id)
+                                setExpandedDriverId(
+                                  isExpanded ? null : driver.id
+                                )
                               }
                               className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-white/10 transition"
                             >
@@ -228,11 +252,11 @@ export function PendingApprovalsDrawer({
                         {/* Driver Metadata */}
                         <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
                           <div className="flex items-center gap-1.5 truncate">
-                            <Mail className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                            <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             <span className="truncate">{driver.email}</span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                            <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                             <span>{driver.phone}</span>
                           </div>
                         </div>
@@ -240,7 +264,7 @@ export function PendingApprovalsDrawer({
                         <div className="flex items-center justify-between text-xs font-semibold text-gray-500 dark:text-gray-400 pt-1">
                           <span className="flex items-center gap-1">
                             <Car className="w-3.5 h-3.5 text-blue-500" />
-                            {driver.total_vehicles} Vehicle(s)
+                            {driver.total_vehicles ?? 0} Vehicle(s)
                           </span>
                           <span>
                             Registered:{" "}
@@ -257,98 +281,134 @@ export function PendingApprovalsDrawer({
                                 Verify Documents
                               </h4>
                               <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                                <span className="text-emerald-500 font-bold">{approvedCount}</span> approved,{" "}
-                                <span className="text-rose-500 font-bold">{rejectedCount}</span> rejected
+                                <span className="text-emerald-500 font-bold">
+                                  {approvedCount}
+                                </span>{" "}
+                                approved,{" "}
+                                <span className="text-rose-500 font-bold">
+                                  {rejectedCount}
+                                </span>{" "}
+                                rejected
                               </span>
                             </div>
 
                             {/* Documents Checklist */}
                             <div className="space-y-2">
-                              {docsList.map((doc: DriverDocument) => {
-                                const currentStatus = driverDocState[doc.id] || "pending";
+                              {docsList.length > 0 ? (
+                                docsList.map((doc: DriverDocument) => {
+                                  const currentStatus =
+                                    doc.status || "pending";
+                                  const isUpdatingThisDoc =
+                                    verifyDocMutation.isPending &&
+                                    verifyDocMutation.variables?.docType ===
+                                      doc.type &&
+                                    verifyDocMutation.variables?.driverId ===
+                                      driver.id;
 
-                                return (
-                                  <div
-                                    key={doc.id}
-                                    className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition ${currentStatus === "approved"
-                                        ? "bg-emerald-500/5 border-emerald-500/30"
-                                        : currentStatus === "rejected"
+                                  return (
+                                    <div
+                                      key={doc.id || doc.type}
+                                      className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition ${
+                                        currentStatus === "approved"
+                                          ? "bg-emerald-500/5 border-emerald-500/30"
+                                          : currentStatus === "rejected"
                                           ? "bg-rose-500/5 border-rose-500/30"
                                           : "bg-white dark:bg-black/20 border-gray-200 dark:border-white/10"
                                       }`}
-                                  >
-                                    <div className="flex items-center gap-2 overflow-hidden mr-2">
-                                      <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
-                                        <FileText className="w-3.5 h-3.5" />
+                                    >
+                                      <div className="flex items-center gap-2 overflow-hidden mr-2">
+                                        <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
+                                          <FileText className="w-3.5 h-3.5" />
+                                        </div>
+                                        <span className="font-medium text-gray-800 dark:text-gray-200 truncate capitalize">
+                                          {doc.name ||
+                                            doc.type.replace("_", " ")}
+                                        </span>
                                       </div>
-                                      <span className="font-medium text-gray-800 dark:text-gray-200 truncate">
-                                        {doc.name}
-                                      </span>
-                                    </div>
 
-                                    {/* Document Controls */}
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                      <a
-                                        href={doc.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition"
-                                        title="Preview Document"
-                                      >
-                                        <Eye className="w-3.5 h-3.5" />
-                                      </a>
+                                      {/* Document Controls */}
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        {doc.url && doc.url !== "#" && (
+                                          <a
+                                            href={doc.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition"
+                                            title="Preview Document"
+                                          >
+                                            <Eye className="w-3.5 h-3.5" />
+                                          </a>
+                                        )}
 
-                                      {/* Approve Doc Button */}
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDocStatusChange(
-                                            driver.id,
-                                            doc.id,
-                                            doc.name,
-                                            "approved"
-                                          )
-                                        }
-                                        className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${currentStatus === "approved"
-                                            ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
-                                            : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10"
+                                        {/* Approve Doc Button */}
+                                        <button
+                                          type="button"
+                                          disabled={verifyDocMutation.isPending}
+                                          onClick={() =>
+                                            handleDocStatusChange(
+                                              driver.id,
+                                              doc.type,
+                                              currentStatus,
+                                              "approved"
+                                            )
+                                          }
+                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${
+                                            currentStatus === "approved"
+                                              ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
+                                              : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10"
                                           }`}
-                                        title="Approve Document"
-                                      >
-                                        <Check className="w-3.5 h-3.5" />
-                                      </button>
+                                          title="Approve Document"
+                                        >
+                                          {isUpdatingThisDoc ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <Check className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
 
-                                      {/* Reject Doc Button */}
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDocStatusChange(
-                                            driver.id,
-                                            doc.id,
-                                            doc.name,
-                                            "rejected"
-                                          )
-                                        }
-                                        className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${currentStatus === "rejected"
-                                            ? "bg-rose-600 text-white shadow-sm shadow-rose-600/30"
-                                            : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10"
+                                        {/* Reject Doc Button */}
+                                        <button
+                                          type="button"
+                                          disabled={verifyDocMutation.isPending}
+                                          onClick={() =>
+                                            handleDocStatusChange(
+                                              driver.id,
+                                              doc.type,
+                                              currentStatus,
+                                              "rejected"
+                                            )
+                                          }
+                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${
+                                            currentStatus === "rejected"
+                                              ? "bg-rose-600 text-white shadow-sm shadow-rose-600/30"
+                                              : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10"
                                           }`}
-                                        title="Reject Document"
-                                      >
-                                        <X className="w-3.5 h-3.5" />
-                                      </button>
+                                          title="Reject Document"
+                                        >
+                                          {isUpdatingThisDoc ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                          ) : (
+                                            <X className="w-3.5 h-3.5" />
+                                          )}
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })
+                              ) : (
+                                <div className="text-center py-4 text-xs text-gray-400">
+                                  No documents uploaded for this driver.
+                                </div>
+                              )}
                             </div>
 
                             {/* Warning Banner */}
                             {rejectedCount > 0 && (
                               <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-2">
-                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                <AlertCircle className="w-4 h-4 shrink-0" />
                                 <span>
-                                  {rejectedCount} document(s) marked for rejection.
+                                  {rejectedCount} document(s) marked for
+                                  rejection.
                                 </span>
                               </div>
                             )}
@@ -359,10 +419,10 @@ export function PendingApprovalsDrawer({
                         <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-white/5">
                           <button
                             onClick={() => handleApprove(driver)}
-                            disabled={updateStatus.isPending}
+                            disabled={updateStatusMutation.isPending}
                             className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
                           >
-                            {updateStatus.isPending ? (
+                            {updateStatusMutation.isPending ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                               <CheckCircle2 className="w-3.5 h-3.5" />
@@ -371,10 +431,10 @@ export function PendingApprovalsDrawer({
                           </button>
                           <button
                             onClick={() => handleReject(driver)}
-                            disabled={updateStatus.isPending}
+                            disabled={updateStatusMutation.isPending}
                             className="flex-1 py-2 px-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl shadow-md shadow-rose-600/20 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
                           >
-                            {updateStatus.isPending ? (
+                            {updateStatusMutation.isPending ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
                               <XCircle className="w-3.5 h-3.5" />

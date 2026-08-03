@@ -1,18 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import { DriverStatus } from "@/types/driver.types";
+import {
+  ApiResponse,
+  Driver,
+  DriverDetailsApiResponse,
+  DriverStatus,
+  GetPendingDriversParams,
+  PendingDriversResponse,
+  UpdateDriverStatusRequest,
+  VerifyDocumentRequest,
+} from "@/types/driver.types";
 
-export interface Driver {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  status: "active" | "inactive" | "pending";
-  created_at: string;
-  updated_at: string;
-  total_vehicles: number;
-  total_rides: number;
-}
 
 export interface Pagination {
   total: number;
@@ -49,7 +47,6 @@ export const fetchDrivers = async ({
   if (status && status !== "all") params.status = status;
   if (search) params.search = search;
 
-  // Endpoint is relative to baseURL: https://carpool-node-backend-app.onrender.com/api/v1/admin
   const response = await apiClient.get<DriversApiResponse>("/drivers", {
     params,
   });
@@ -61,12 +58,20 @@ export function useDrivers(params: FetchDriversParams) {
   return useQuery({
     queryKey: ["drivers", params],
     queryFn: () => fetchDrivers(params),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 2,
   });
 }
 
-// React Query Hook for Driver Status Update (Approve/Reject/Suspend)
-export function useUpdateDriverStatus() {
+export const DriverService = {
+  async getDriverById(driverId: number | string): Promise<DriverDetailsApiResponse> {
+    const response = await apiClient.get<DriverDetailsApiResponse>(
+      `/admin/drivers/${driverId}`
+    );
+    return response.data;
+  },
+};
+
+export function useUpdateDriverActivityStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -79,7 +84,6 @@ export function useUpdateDriverStatus() {
       status: DriverStatus;
       reason?: string;
     }) => {
-      // Endpoint is relative to baseURL: https://carpool-node-backend-app.onrender.com/api/v1/admin
       const response = await apiClient.patch(`/drivers/${driverId}`, {
         status,
         reason,
@@ -91,3 +95,49 @@ export function useUpdateDriverStatus() {
     },
   });
 }
+
+export const DriverApproval = {
+  getPendingDrivers: async (
+    params?: GetPendingDriversParams,
+  ): Promise<PendingDriversResponse> => {
+    const response = await apiClient.get<PendingDriversResponse>(
+      "/drivers/pending",
+      {
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          search: params?.search || "",
+        },
+      },
+    );
+
+    return response.data;
+  },
+  async verifyDocument({
+    driverId,
+    docType,
+    status,
+  }: VerifyDocumentRequest): Promise<ApiResponse> {
+    const response = await apiClient.patch<ApiResponse>(
+      `/drivers/${driverId}/verify-document`,
+      {
+        docType,
+        status,
+      },
+    );
+    return response.data;
+  },
+
+  async updateDriverStatus({
+    driverId,
+    status,
+  }: UpdateDriverStatusRequest): Promise<ApiResponse> {
+    const response = await apiClient.patch<ApiResponse>(
+      `/drivers/${driverId}/status`,
+      {
+        status,
+      },
+    );
+    return response.data;
+  },
+};
