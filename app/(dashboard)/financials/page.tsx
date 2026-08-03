@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DollarSign,
@@ -21,19 +21,15 @@ import {
 } from "lucide-react";
 import { paymentService } from "@/services/paymentService";
 import { PaymentTransactionRaw } from "@/types/payment";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function FinanceDashboardPage() {
-  // API State
-  const [transactions, setTransactions] = useState<PaymentTransactionRaw[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Filters & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [timeRange, setTimeRange] = useState("This Month");
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   // Drawer & Action State
   const [selectedTxn, setSelectedTxn] = useState<PaymentTransactionRaw | null>(null);
@@ -41,45 +37,35 @@ export default function FinanceDashboardPage() {
   const [refundReason, setRefundReason] = useState("");
   const [refundAmount, setRefundAmount] = useState<string>("");
 
-  // Fetch Payments from Backend
-  const fetchPayments = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["admin-payments", page, statusFilter, searchQuery, timeRange],
+    queryFn: async () => {
       const response = await paymentService.getAdminPayments({
         page,
         limit: 10,
         status: statusFilter === "All" ? undefined : statusFilter.toLowerCase(),
         search: searchQuery.trim() || undefined,
+        // timeRange: timeRange, // Pass if your API supports time window filtering
       });
 
-      if (response.success) {
-        setTransactions(response.data || []);
-        if (response.pagination) {
-          setTotalPages(response.pagination.totalPages);
-        }
-      } else {
-        setError(response.message || "Failed to load transactions.");
+      if (!response.success) {
+        throw new Error(response.message || "Failed to load transactions.");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      console.error("Error fetching admin payments:", err);
-      setError(
-        err?.response?.data?.message || "Failed to establish connection with server."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, statusFilter, searchQuery]);
+      return response;
+    },
+    placeholderData: (previousData) => previousData, // Keeps UI smooth during page pagination
+  });
 
-  // Initial Fetch & Auto Refetch on filter changes
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPayments();
-    }, 300); // 300ms debounce for search input
-
-    return () => clearTimeout(timer);
-  }, [fetchPayments]);
+  // Extract data safely with fallbacks
+  const transactions = data?.data || [];
+  const totalPages = data?.pagination?.totalPages || 1;
+  const stats = data?.stats || {
+    gross_fare: 0,
+    admin_revenue: 0,
+    driver_payouts: 0,
+    platform_percent: 20,
+    driver_percent: 80,
+  };
 
   // Handle Refund Action
   const handleProcessRefund = async () => {
@@ -99,27 +85,20 @@ export default function FinanceDashboardPage() {
         setRefundReason("");
         setRefundAmount("");
         setSelectedTxn(null);
-        fetchPayments(); // Refresh table
+        // Invalidate all payment queries to keep UI fresh everywhere
+        queryClient.invalidateQueries({ queryKey: ["admin-payments"] });
       }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to process refund.");
+      alert(err?.response?.data?.message || err?.message || "Failed to process refund.");
     } finally {
       setIsProcessingRefund(false);
     }
   };
 
-  // Mocked Metrics calculation (Preserved as requested)
-  const totalGross = transactions.reduce(
-    (acc, curr) => acc + (Number(curr.amount) || 0),
-    0
-  );
-  const totalCommission = totalGross * 0.2;
-  const totalPayouts = totalGross * 0.8; 
-
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto min-h-screen transition-colors duration-300 select-none">
-
       {/* 1. Page Header & Time Window Selection */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -148,7 +127,7 @@ export default function FinanceDashboardPage() {
           </select>
 
           <button
-            onClick={() => fetchPayments()}
+            onClick={() => refetch()}
             className="p-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:text-blue-500 transition"
             title="Refresh Data"
           >
@@ -161,12 +140,12 @@ export default function FinanceDashboardPage() {
         </div>
       </div>
 
-      {/* 2. Glassmorphic Hero Metrics Grid (Mocked for now) */}
+      {/* 2. Glassmorphic Hero Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-blue-600/10 via-blue-500/5 to-transparent border border-blue-500/20 shadow-lg backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              Net Admin Revenue (20%)
+              Net Admin Revenue ({stats.platform_percent}%)
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
               <TrendingUp className="w-5 h-5" />
@@ -174,7 +153,7 @@ export default function FinanceDashboardPage() {
           </div>
           <div className="mt-4">
             <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-              ₹{totalCommission.toFixed(2)}
+              ₹{(stats.admin_revenue || 0).toFixed(2)}
             </p>
             <div className="flex items-center gap-2 mt-2 text-xs font-bold text-emerald-500">
               <ArrowUpRight className="w-4 h-4" />
@@ -194,7 +173,7 @@ export default function FinanceDashboardPage() {
           </div>
           <div className="mt-4">
             <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-              ₹{totalGross.toFixed(2)}
+              ₹{(stats.gross_fare || 0).toFixed(2)}
             </p>
             <div className="flex items-center gap-2 mt-2 text-xs font-bold text-emerald-500">
               <ArrowUpRight className="w-4 h-4" />
@@ -214,10 +193,10 @@ export default function FinanceDashboardPage() {
           </div>
           <div className="mt-4">
             <p className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-              ₹{totalPayouts.toFixed(2)}
+              ₹{(stats.driver_payouts || 0).toFixed(2)}
             </p>
             <div className="flex items-center gap-2 mt-2 text-xs font-medium text-gray-400">
-              <span>80% driver share split</span>
+              <span>{stats.driver_percent}% driver share split</span>
             </div>
           </div>
         </div>
@@ -230,12 +209,22 @@ export default function FinanceDashboardPage() {
             <PieChart className="w-4 h-4 text-blue-500" />
             Fare Split Model Allocation
           </h2>
-          <span className="text-xs text-gray-400 font-mono">20% Platform / 80% Driver</span>
+          <span className="text-xs text-gray-400 font-mono">
+            {stats.platform_percent}% Platform / {stats.driver_percent}% Driver
+          </span>
         </div>
 
         <div className="h-4 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden flex p-0.5">
-          <div className="h-full bg-blue-600 rounded-l-full w-[20%]" title="Platform Fee (20%)" />
-          <div className="h-full bg-emerald-500 rounded-r-full w-[80%]" title="Driver Share (80%)" />
+          <div
+            className="h-full bg-blue-600 rounded-l-full transition-all duration-500"
+            style={{ width: `${stats.platform_percent}%` }}
+            title={`Platform Fee (${stats.platform_percent}%)`}
+          />
+          <div
+            className="h-full bg-emerald-500 rounded-r-full transition-all duration-500"
+            style={{ width: `${stats.driver_percent}%` }}
+            title={`Driver Share (${stats.driver_percent}%)`}
+          />
         </div>
       </div>
 
@@ -246,7 +235,10 @@ export default function FinanceDashboardPage() {
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search by Order ID, Booking Code, or Payment ID..."
             className="w-full bg-gray-100/80 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition"
           />
@@ -263,8 +255,8 @@ export default function FinanceDashboardPage() {
                   setPage(1);
                 }}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
                 {tab}
@@ -298,10 +290,10 @@ export default function FinanceDashboardPage() {
                     Loading payment records...
                   </td>
                 </tr>
-              ) : error ? (
+              ) : isError ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-rose-500 font-medium">
-                    {error}
+                    {error instanceof Error ? error.message : "Failed to load payment transactions."}
                   </td>
                 </tr>
               ) : transactions.length > 0 ? (
@@ -309,7 +301,7 @@ export default function FinanceDashboardPage() {
                   <tr
                     key={txn.id}
                     onClick={() => setSelectedTxn(txn)}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer group"
+                    className="hover:bg-gray-50 dark:hover:bg-white/2 transition cursor-pointer group"
                   >
                     <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-white">
                       #{txn.id}
@@ -391,7 +383,7 @@ export default function FinanceDashboardPage() {
             <button
               disabled={page === 1}
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-40"
+              className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition font-medium"
             >
               Previous
             </button>
@@ -401,7 +393,7 @@ export default function FinanceDashboardPage() {
             <button
               disabled={page === totalPages}
               onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-              className="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 disabled:opacity-40"
+              className="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition font-medium"
             >
               Next
             </button>
@@ -446,7 +438,7 @@ export default function FinanceDashboardPage() {
               </div>
 
               {/* Amount Box */}
-              <div className="p-5 bg-linear-to-br from-blue-600/10 to-transparent border border-blue-500/20 rounded-2xl space-y-3">
+              <div className="p-5 bg-gradient-to-br from-blue-600/10 to-transparent border border-blue-500/20 rounded-2xl space-y-3">
                 <span className="text-xs text-blue-600 dark:text-blue-400 font-bold uppercase">
                   Transaction Amount
                 </span>
@@ -524,7 +516,7 @@ export default function FinanceDashboardPage() {
                   <button
                     onClick={handleProcessRefund}
                     disabled={isProcessingRefund}
-                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 disabled:opacity-50"
+                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 disabled:opacity-50 cursor-pointer"
                   >
                     {isProcessingRefund ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

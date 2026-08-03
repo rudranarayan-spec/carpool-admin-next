@@ -20,17 +20,31 @@ export interface PaymentTransactionRaw {
   amount: number;
   refund_id: string | null;
   refunded_at: string | null;
-  payment_status: "paid" | "unpaid" | "failed" | "refunded" | "partially_refunded" | string;
+  payment_status:
+    | "paid"
+    | "unpaid"
+    | "failed"
+    | "refunded"
+    | "partially_refunded"
+    | string;
   payment_gateway: string;
   created_at: string;
   updated_at: string;
 }
 
+export interface PaymentStats {
+  gross_fare: number;
+  admin_revenue: number;
+  driver_payouts: number;
+  platform_percent: number;
+  driver_percent: number;
+}
 export interface GetAdminPaymentsResponse {
   success: boolean;
   message: string;
   data: PaymentTransactionRaw[];
   pagination: Pagination;
+  stats: PaymentStats;
 }
 
 export interface GetAdminPaymentsParams {
