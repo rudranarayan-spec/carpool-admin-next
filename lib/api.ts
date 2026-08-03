@@ -27,7 +27,7 @@ function getAuthToken(): string | null {
 }
 
 export const apiClient = axios.create({
-  baseURL: "carpool-admin-next.vercel.app/api/v1/admin",
+  baseURL: "https://carpool-node-backend-app.onrender.com/api/v1/admin",
   headers: {
     "Content-Type": "application/json",
   },
