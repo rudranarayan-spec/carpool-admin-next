@@ -68,7 +68,7 @@ export const RideService = {
 
   updateRide: async (id: number | string, payload: UpdateRidePayload): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.put<MutationRideResponse>(`/rides/${id}`, payload);
+      const response = await apiClient.patch<MutationRideResponse>(`/rides/${id}`, payload);
       return response.data;
     } catch (error: unknown) {
       console.error(`Error updating ride #${id}:`, parseApiError(error));
