@@ -107,10 +107,10 @@ export function PendingApprovalsDrawer({
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
-          toast.error(
-            `Failed to approve driver: ${error?.message || "Unknown error"}`,
-            { id: toastId }
-          );
+          const errorMessage =
+            error?.response?.data?.message || error.message || "Something went wrong";
+
+          toast.error(errorMessage, { id: toastId });
         },
       }
     );
@@ -120,7 +120,7 @@ export function PendingApprovalsDrawer({
     const toastId = toast.loading(`Rejecting ${driver.name}...`);
 
     updateStatusMutation.mutate(
-      { driverId: driver.id, status: "blocked" },
+      { driverId: driver.id, status: "rejected" },
       {
         onSuccess: () => {
           toast.error(`${driver.name} application was rejected`, {
@@ -212,11 +212,10 @@ export function PendingApprovalsDrawer({
                     return (
                       <div
                         key={driver.id}
-                        className={`p-4 bg-gray-50 dark:bg-white/3 rounded-2xl border transition-all space-y-4 ${
-                          isExpanded
+                        className={`p-4 bg-gray-50 dark:bg-white/3 rounded-2xl border transition-all space-y-4 ${isExpanded
                             ? "border-amber-500/40 shadow-lg"
                             : "border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20"
-                        }`}
+                          }`}
                       >
                         {/* Driver Card Header */}
                         <div className="flex justify-between items-start">
@@ -301,20 +300,19 @@ export function PendingApprovalsDrawer({
                                   const isUpdatingThisDoc =
                                     verifyDocMutation.isPending &&
                                     verifyDocMutation.variables?.docType ===
-                                      doc.type &&
+                                    doc.type &&
                                     verifyDocMutation.variables?.driverId ===
-                                      driver.id;
+                                    driver.id;
 
                                   return (
                                     <div
                                       key={doc.id || doc.type}
-                                      className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition ${
-                                        currentStatus === "approved"
+                                      className={`flex items-center justify-between p-2.5 rounded-xl border text-xs transition ${currentStatus === "approved"
                                           ? "bg-emerald-500/5 border-emerald-500/30"
                                           : currentStatus === "rejected"
-                                          ? "bg-rose-500/5 border-rose-500/30"
-                                          : "bg-white dark:bg-black/20 border-gray-200 dark:border-white/10"
-                                      }`}
+                                            ? "bg-rose-500/5 border-rose-500/30"
+                                            : "bg-white dark:bg-black/20 border-gray-200 dark:border-white/10"
+                                        }`}
                                     >
                                       <div className="flex items-center gap-2 overflow-hidden mr-2">
                                         <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
@@ -352,11 +350,10 @@ export function PendingApprovalsDrawer({
                                               "approved"
                                             )
                                           }
-                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${
-                                            currentStatus === "approved"
+                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${currentStatus === "approved"
                                               ? "bg-emerald-600 text-white shadow-sm shadow-emerald-600/30"
                                               : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-emerald-500 hover:bg-emerald-500/10"
-                                          }`}
+                                            }`}
                                           title="Approve Document"
                                         >
                                           {isUpdatingThisDoc ? (
@@ -378,11 +375,10 @@ export function PendingApprovalsDrawer({
                                               "rejected"
                                             )
                                           }
-                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${
-                                            currentStatus === "rejected"
+                                          className={`p-1.5 rounded-lg font-bold transition flex items-center gap-1 ${currentStatus === "rejected"
                                               ? "bg-rose-600 text-white shadow-sm shadow-rose-600/30"
                                               : "bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10"
-                                          }`}
+                                            }`}
                                           title="Reject Document"
                                         >
                                           {isUpdatingThisDoc ? (

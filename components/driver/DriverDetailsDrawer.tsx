@@ -175,8 +175,16 @@ export function DriverDetailsDrawer({
               <div className="flex items-start justify-between gap-4 mb-5">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-black tracking-tight capitalize text-slate-900 dark:text-white">
+                    <h2
+                      onClick={() => {
+                        onClose(); 
+                        router.push(`/users/${driver.id}`);
+                      }}
+                      className="text-xl font-black tracking-tight capitalize text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 group"
+                      title="View full user profile"
+                    >
                       {driver.name}
+                      <ExternalLink className="w-4 h-4 transition-opacity" />
                     </h2>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                       Driver
@@ -204,8 +212,8 @@ export function DriverDetailsDrawer({
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`relative flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-bold rounded-xl transition-colors duration-200 select-none z-10 ${isActive
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                         }`}
                     >
                       {isActive && (
@@ -340,7 +348,7 @@ export function DriverDetailsDrawer({
                                   onClose();
                                   router.push(`/rides/${ride.id}`);
                                 }}
-                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5 space-y-2"
+                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5 space-y-2 cursor-pointer"
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-mono font-bold text-slate-500">

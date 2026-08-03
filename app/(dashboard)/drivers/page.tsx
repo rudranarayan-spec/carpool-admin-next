@@ -61,7 +61,6 @@ export default function DriverManagementPage() {
   const drivers = data?.data || [];
   const pagination = data?.pagination;
   const pendingCount = pendingData?.pagination?.total || 0;
-  const pendingList = pendingData?.data || [];
 
   const handleStatusChange = (driverId: string | number, newStatus: DriverStatus) => {
     const numericId = Number(driverId);
@@ -306,6 +305,11 @@ export default function DriverManagementPage() {
                       {driver.status === "blocked" && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                           <Ban className="w-3.5 h-3.5" /> Blocked
+                        </span>
+                      )}
+                      {driver.status === "rejected" && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                          <Ban className="w-3.5 h-3.5" /> Rejected
                         </span>
                       )}
                     </td>
