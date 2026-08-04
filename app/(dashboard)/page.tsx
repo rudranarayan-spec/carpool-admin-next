@@ -214,7 +214,7 @@ export default function DashboardPage() {
               className={`rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group border ${stat.theme.lightBorder} dark:border-white/10 bg-gradient-to-br from-white via-slate-50/50 to-white dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] shadow-sm hover:shadow-md dark:hover:border-white/20 transition-all backdrop-blur-md`}
             >
               {/* Subtle Gradient Accent Overlay */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${stat.theme.accentGlow} opacity-60 pointer-events-none`} />
+              <div className={`absolute inset-0 bg-linear-to-br ${stat.theme.accentGlow} opacity-60 pointer-events-none`} />
 
               <div className="flex items-center justify-between relative z-10">
                 <span className="text-[11px] font-extrabold tracking-wider text-slate-500 dark:text-gray-400 uppercase">

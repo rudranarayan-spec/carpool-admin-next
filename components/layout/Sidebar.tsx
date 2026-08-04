@@ -26,16 +26,22 @@ import {
   Share2,
   FileText,
   Ticket,
+  Star,
+  MessageCircleCheck,
+  AlertCircle,
 } from "lucide-react";
 
 const navItems = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
   { name: "Ride Management", href: "/rides", icon: Car },
-  { name: "Driver Approvals", href: "/drivers", icon: UserCheck },
+  { name: "Driver Management", href: "/drivers", icon: UserCheck },
   { name: "Users", href: "/users", icon: ShieldCheck },
   { name: "Financials", href: "/financials", icon: Wallet },
-  { name: "Vehicle Approvals", href: "/vehicles", icon: Truck },
+  { name: "Vehicles", href: "/vehicles", icon: Truck },
   { name: "Offers", href: "/offers", icon: Ticket },
+  { name: "Ratings", href: "/ratings", icon: Star },
+  { name: "Conversations", href: "/conversations", icon: MessageCircleCheck },
+  { name: "Emergency SOS", href: "/sos", icon: AlertCircle },
 ];
 
 const logSubItems = [
@@ -43,7 +49,7 @@ const logSubItems = [
   { name: "System Logs", href: "/system-logs", icon: MonitorX },
 ];
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -88,9 +94,9 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#090C10]/90 dark:bg-[#090C10]/90 bg-white/90 backdrop-blur-md border-b border-white/10 dark:border-white/10 border-gray-200 px-4 flex items-center justify-between z-40">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-[#090C10]/90 dark:bg-[#090C10]/90 backdrop-blur-md border-b border-white/10 dark:border-white/10 px-4 flex items-center justify-between z-40">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
             <Share2 className="w-5 h-5" />
           </div>
           <span className="text-xl sm:text-2xl font-black text-blue-600 dark:text-white tracking-wider">
@@ -99,7 +105,7 @@ export default function Sidebar() {
         </div>
         <button
           onClick={toggleMobileMenu}
-          className="p-2.5 rounded-xl bg-white/5 dark:bg-white/5 bg-gray-100 border border-white/10 dark:border-white/10 border-gray-200 text-gray-700 dark:text-gray-300"
+          className="p-2.5 rounded-xl bg-white/5 dark:bg-white/5 border border-white/10 dark:border-white/10 text-gray-700 dark:text-gray-300"
           aria-label="Toggle Mobile Sidebar"
         >
           {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -121,19 +127,17 @@ export default function Sidebar() {
 
       {/* Main Sidebar Shell */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 h-screen bg-white dark:bg-[#090C10] border-r border-gray-200 dark:border-white/10 flex flex-col justify-between p-4 select-none transition-all duration-300 ease-in-out ${
-          isCollapsed ? "lg:w-22" : "w-72 lg:w-72"
-        } ${
-          isMobileOpen
+        className={`fixed lg:static top-0 bottom-0 left-0 z-50 h-screen bg-white dark:bg-[#090C10] border-r border-gray-200 dark:border-white/10 flex flex-col justify-between p-4 select-none transition-all duration-300 ease-in-out ${isCollapsed ? "lg:w-22" : "w-72 lg:w-72"
+          } ${isMobileOpen
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0"
-        }`}
+          }`}
       >
         {/* Top Header Section */}
         <div>
           <div className="flex items-center justify-between px-2 pt-2 pb-6">
             <div className="flex items-center gap-3.5 overflow-hidden">
-              <div className="min-w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
+              <div className="min-w-10 h-10 rounded-xl bg-linear-to-tr from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
                 <Share2 className="w-5 h-5" />
               </div>
 
@@ -156,9 +160,8 @@ export default function Sidebar() {
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               <ChevronLeft
-                className={`w-5 h-5 transition-transform duration-300 ${
-                  isCollapsed ? "rotate-180" : ""
-                }`}
+                className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""
+                  }`}
               />
             </button>
           </div>
@@ -174,11 +177,10 @@ export default function Sidebar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
-                  className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${
-                    isActive
+                  className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${isActive
                       ? "text-blue-600 dark:text-blue-400 font-bold"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-                  }`}
+                    }`}
                   title={isCollapsed ? item.name : undefined}
                 >
                   {isActive && (
@@ -191,11 +193,10 @@ export default function Sidebar() {
 
                   <div className="flex items-center gap-3.5 z-10">
                     <Icon
-                      className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${
-                        isActive
+                      className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isActive
                           ? "text-blue-600 dark:text-blue-400"
                           : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                      }`}
+                        }`}
                     />
                     {!isCollapsed && <span className="text-sm">{item.name}</span>}
                   </div>
@@ -216,29 +217,26 @@ export default function Sidebar() {
                   if (isCollapsed) setIsCollapsed(false);
                   setUserLogsToggle(!isLogsOpen);
                 }}
-                className={`w-full relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${
-                  isLogRouteActive
+                className={`w-full relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${isLogRouteActive
                     ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
+                  }`}
                 title={isCollapsed ? "Logs" : undefined}
               >
                 <div className="flex items-center gap-3.5 z-10">
                   <FileText
-                    className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${
-                      isLogRouteActive
+                    className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isLogRouteActive
                         ? "text-blue-600 dark:text-blue-400"
                         : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                    }`}
+                      }`}
                   />
                   {!isCollapsed && <span className="text-sm">Logs</span>}
                 </div>
 
                 {!isCollapsed && (
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
-                      isLogsOpen ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isLogsOpen ? "rotate-180" : ""
+                      }`}
                   />
                 )}
               </button>
@@ -265,11 +263,10 @@ export default function Sidebar() {
                             setIsMobileOpen(false);
                             setUserLogsToggle(null); // Reset manual toggle on navigation so derived state takes over
                           }}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                            isSubActive
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isSubActive
                               ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 font-bold"
                               : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-                          }`}
+                            }`}
                         >
                           <SubIcon className="w-4 h-4" />
                           <span>{subItem.name}</span>
@@ -285,11 +282,10 @@ export default function Sidebar() {
             <Link
               href="/settings"
               onClick={() => setIsMobileOpen(false)}
-              className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${
-                pathname === "/settings"
+              className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${pathname === "/settings"
                   ? "text-blue-600 dark:text-blue-400 font-bold"
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
-              }`}
+                }`}
               title={isCollapsed ? "Settings" : undefined}
             >
               {pathname === "/settings" && (
@@ -301,11 +297,10 @@ export default function Sidebar() {
               )}
               <div className="flex items-center gap-3.5 z-10">
                 <Settings
-                  className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${
-                    pathname === "/settings"
+                  className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/settings"
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                  }`}
+                    }`}
                 />
                 {!isCollapsed && <span className="text-sm">Settings</span>}
               </div>
@@ -318,9 +313,8 @@ export default function Sidebar() {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-blue-600/30 transition-all duration-200 ${
-              isCollapsed ? "px-2" : ""
-            }`}
+            className={`w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-blue-600/30 transition-all duration-200 ${isCollapsed ? "px-2" : ""
+              }`}
           >
             <Plus className="w-5 h-5" />
             {!isCollapsed && <span>New Dispatch</span>}

@@ -14,16 +14,9 @@ import {
   X,
   RefreshCw,
   Loader2,
-  Mail,
-  Phone,
-  Calendar,
   ExternalLink,
-  MapPin,
-  Building,
-  CreditCard,
   ChevronRight,
   User,
-  AlertTriangle,
   Zap,
 } from "lucide-react";
 import userService, {
@@ -45,7 +38,6 @@ export default function UserManagementPage() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [drawerLoading, setDrawerLoading] = useState<boolean>(false);
-  const [actionProcessing, setActionProcessing] = useState<boolean>(false);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,6 +47,10 @@ export default function UserManagementPage() {
   // Selected User State for Quick Action Drawer Modal
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null);
+
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
   // --- API Fetch Functions ---
 
@@ -66,16 +62,21 @@ export default function UserManagementPage() {
         search: searchQuery,
         role: roleFilter !== "All" ? roleFilter : undefined,
         status: statusFilter !== "All" ? statusFilter : undefined,
+        page,
+        limit,
       });
 
       setUsers(data.users);
       setStats(data.stats);
+      setTotalPages(Math.ceil((data.stats?.totalUsers || 0) / limit) || 1);
     } catch (error) {
       console.error("Error fetching users list:", error);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, roleFilter, statusFilter]);
+  }, [searchQuery, roleFilter, statusFilter, page, limit]);
+
+
 
   // Debounce search query / fetch trigger on filter changes
   useEffect(() => {
@@ -85,6 +86,8 @@ export default function UserManagementPage() {
 
     return () => clearTimeout(timer);
   }, [fetchUsersData]);
+
+
 
   // 2. Fetch User Details for Quick Action Drawer
   const handleQuickActionClick = async (e: React.MouseEvent, userId: number) => {
@@ -218,11 +221,10 @@ export default function UserManagementPage() {
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap capitalize ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap capitalize ${isActive
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 {tab === "active" ? "Verified" : tab}
               </button>
@@ -256,7 +258,7 @@ export default function UserManagementPage() {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition group"
+                    className="hover:bg-gray-50 dark:hover:bg-white/2 transition group"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link href={`/users/${user.id}`} className="flex items-center gap-3 group-hover:opacity-90">
@@ -336,6 +338,31 @@ export default function UserManagementPage() {
             </tbody>
           </table>
         </div>
+        {/* Pagination Bar */}
+        <div className="flex items-center justify-between p-4 bg-white dark:bg-[#090C10] border-t border-gray-200 dark:border-white/10 rounded-b-2xl">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            Page <span className="font-bold text-gray-900 dark:text-white">{page}</span> of{" "}
+            <span className="font-bold text-gray-900 dark:text-white">{totalPages || 1}</span>
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+              disabled={page === 1 || loading}
+              className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            <button
+              onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              disabled={page >= totalPages || loading}
+              className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* 4. Quick Action Drawer Modal */}
@@ -410,7 +437,7 @@ export default function UserManagementPage() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-white/10">
                       <span className="text-xs font-bold text-gray-500">Current Status</span>
                       {renderStatusBadge(selectedUserDetails.status)}
