@@ -307,7 +307,7 @@ export default function FinanceDashboardPage() {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-purple-600/10 via-purple-500/5 to-transparent border border-purple-500/20 shadow-xl backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-3xl p-6 bg-linear-to-br from-purple-600/10 via-purple-500/5 to-transparent border border-purple-500/20 shadow-xl backdrop-blur-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
               Driver Payouts Disbursed
@@ -377,7 +377,7 @@ export default function FinanceDashboardPage() {
               : "bg-white dark:bg-[#090C10] border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5"
           }`}
         >
-          <RotateCcw className="w-4 h-4" /> Refund Requests
+          <RotateCcw className="w-4 h-4" /> Refund Log
         </button>
       </div>
 

@@ -113,6 +113,7 @@ export const DriverApproval = {
 
     return response.data;
   },
+  
   async verifyDocument({
     driverId,
     docType,

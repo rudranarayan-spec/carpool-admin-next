@@ -21,7 +21,6 @@ export default function AdminConversationsPage() {
     const queryClient = useQueryClient();
     const router = useRouter();
 
-
     // 1. Fetch all conversations using React Query
     const {
         data: conversationsResponse,
@@ -68,23 +67,23 @@ export default function AdminConversationsPage() {
     );
 
     return (
-        <div className="flex -m-6 h-[calc(100vh-4rem)] w-[calc(100%+3rem)] overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+        <div className="flex -m-6 h-[calc(100vh-4rem)] w-[calc(100%+3rem)] overflow-hidden bg-slate-50 dark:bg-gray-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
             {/* LEFT SIDEBAR: Conversations List */}
-            <div className={`w-full md:w-96 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 ${selectedConversationId && 'hidden md:flex'}`}>
+            <div className={`w-full md:w-96 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-gray-900 ${selectedConversationId && 'hidden md:flex'}`}>
 
                 {/* Header & Search */}
                 <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                            <div className="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                            <div className="p-2 bg-gray-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
                                 <MessageSquare className="w-5 h-5" />
                             </div>
                             <h1 className="text-lg font-bold">User Conversations</h1>
                         </div>
                         <button
                             onClick={() => refetchConversations()}
-                            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500"
+                            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-gray-800 transition-colors text-slate-500"
                             title="Refresh conversations"
                         >
                             <RefreshCw className={`w-4 h-4 ${isLoadingConversations ? 'animate-spin' : ''}`} />
@@ -98,7 +97,7 @@ export default function AdminConversationsPage() {
                             placeholder="Search driver, passenger, or message..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-slate-100 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -127,9 +126,9 @@ export default function AdminConversationsPage() {
                                     key={conv.id}
                                     onClick={() => setSelectedConversationId(conv.id)}
                                     className={`p-4 cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isSelected
-                                        ? 'bg-indigo-50/80 dark:bg-indigo-950/30 border-l-4 border-indigo-600 dark:border-indigo-500'
+                                        ? 'bg-indigo-50/80 dark:bg-gray-950/30 border-l-4 border-indigo-600 dark:border-indigo-500'
                                         : ''
-                                        }`}
+                                    }`}
                                 >
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -160,49 +159,54 @@ export default function AdminConversationsPage() {
             </div>
 
             {/* RIGHT AREA: Active Conversation Thread & User Details Panel */}
-            <div className={`flex-1 flex flex-col bg-slate-50 dark:bg-slate-950 ${!selectedConversationId && 'hidden md:flex'}`}>
+            <div className={`flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 ${!selectedConversationId && 'hidden md:flex'}`}>
                 {selectedConversationId && currentConversationMeta ? (
                     <>
                         {/* Chat Top Navbar */}
-                        <div className="px-6 py-3.5 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs cursor-pointer" onClick={() => router.push(`/rides/${currentConversationMeta.ride_id}`)}>
-                            <div className="flex items-center space-x-4">
+                        <div
+                            className="px-6 py-3.5 bg-white dark:bg-gray-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shadow-xs cursor-pointer"
+                            onClick={() => router.push(`/rides/${currentConversationMeta.ride_id}`)}
+                        >
+                            <div className="flex items-center space-x-4 min-w-0">
                                 <button
-                                    onClick={() => setSelectedConversationId(null)}
-                                    className="md:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedConversationId(null);
+                                    }}
+                                    className="md:hidden p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0"
                                 >
                                     ← Back
                                 </button>
-                                <div>
-                                    <div className="flex items-center gap-2 cursor-pointer" >
-                                        <h2 className="font-semibold text-base">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-2 cursor-pointer">
+                                        <h2 className="font-semibold text-base truncate">
                                             {currentConversationMeta.driver_name} & {currentConversationMeta.passenger_name}
                                         </h2>
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium shrink-0">
                                             Booking #{currentConversationMeta.booking_id}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5" 
-                                    >
-                                        <Car className="w-3.5 h-3.5 text-indigo-500" /> Ride ID: {currentConversationMeta.ride_id}
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+                                        <Car className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> Ride ID: {currentConversationMeta.ride_id}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Quick Participant Contacts */}
-                            <div className="hidden lg:flex items-center gap-4 text-xs">
+                            <div className="hidden lg:flex items-center gap-4 text-xs shrink-0">
                                 <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                    <User className="w-3.5 h-3.5 text-indigo-500" />
+                                    <User className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                                     <span>Driver: <strong>{currentConversationMeta.driver_phone}</strong></span>
                                 </div>
                                 <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl flex items-center gap-2">
-                                    <User className="w-3.5 h-3.5 text-amber-500" />
+                                    <User className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                                     <span>Passenger: <strong>{currentConversationMeta.passenger_phone}</strong></span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Message History Feed - WhatsApp-style Side-by-Side Layout */}
-                        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+                        {/* Message History Feed - Responsive WhatsApp Style */}
+                        <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-3 min-w-0">
                             {isLoadingMessages ? (
                                 <div className="flex items-center justify-center h-full">
                                     <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
@@ -219,22 +223,34 @@ export default function AdminConversationsPage() {
                                     return (
                                         <div
                                             key={msg.id}
-                                            className={`flex flex-col max-w-[70%] ${isDriver ? 'items-start mr-auto' : 'items-end ml-auto'}`}
+                                            className={`flex flex-col max-w-[85%] sm:max-w-[70%] min-w-0 ${
+                                                isDriver ? 'items-start mr-auto' : 'items-end ml-auto'
+                                            }`}
                                         >
-                                            <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400 px-1">
-                                                <span className="font-semibold text-slate-700 dark:text-slate-300">{msg.sender_name}</span>
-                                                <span className={`px-1.5 py-0.2 rounded text-[10px] uppercase font-bold ${isDriver ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-600'
-                                                    }`}>
+                                            {/* Header Details */}
+                                            <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400 px-1 max-w-full overflow-hidden">
+                                                <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                                    {msg.sender_name}
+                                                </span>
+                                                <span className={`px-1.5 py-0.2 rounded text-[10px] uppercase font-bold shrink-0 ${
+                                                    isDriver ? 'bg-indigo-500/10 text-indigo-600' : 'bg-amber-500/10 text-amber-600'
+                                                }`}>
                                                     {isDriver ? 'Driver' : 'Passenger'}
                                                 </span>
-                                                <span>•</span>
-                                                <span>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="shrink-0">•</span>
+                                                <span className="shrink-0">
+                                                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
                                             </div>
 
-                                            <div className={`p-3 rounded-2xl text-sm shadow-xs ${isDriver
-                                                ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-tl-sm text-slate-800 dark:text-slate-200'
-                                                : 'bg-indigo-600 text-white rounded-tr-sm'
-                                                }`}>
+                                            {/* Message Bubble */}
+                                            <div
+                                                className={`p-3 rounded-2xl text-sm shadow-xs min-w-0 break-all whitespace-pre-wrap ${
+                                                    isDriver
+                                                        ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-tl-sm text-slate-800 dark:text-slate-200'
+                                                        : 'bg-indigo-600 text-white rounded-tr-sm'
+                                                }`}
+                                            >
                                                 {msg.message}
                                             </div>
                                         </div>
