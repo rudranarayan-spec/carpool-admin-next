@@ -342,7 +342,7 @@ export default function RideDetailsPage() {
                     Platform Fee (10%)
                   </p>
                   <p className="text-lg font-black text-blue-600 dark:text-blue-400">
-                    ₹{ride.financial_breakup.platform_fee}
+                    ₹{ride.financial_breakup.platform_fee.toFixed(2)}
                   </p>
                 </div>
 
@@ -360,7 +360,7 @@ export default function RideDetailsPage() {
                     GST / Tax
                   </p>
                   <p className="text-lg font-black text-slate-700 dark:text-slate-300">
-                    ₹{ride.financial_breakup.gst_tax}
+                    ₹{ride.financial_breakup.gst_tax.toFixed(2)}
                   </p>
                 </div>
               </div>

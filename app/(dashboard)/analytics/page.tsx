@@ -2,11 +2,15 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { analyticsService } from "@/services/analytics.service";
 import {
-  TrendingUp,
+  AnalyticsQueryParams,
+  PlatformPerformanceData,
+} from "@/types/analytics.types";
+import {
   Users,
   Car,
-  Clock,
   Zap,
   ArrowUpRight,
   ArrowDownRight,
@@ -18,7 +22,8 @@ import {
   MapPin,
   Lightbulb,
   Sparkles,
-  ChevronRight,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import {
   BarChart,
@@ -30,28 +35,53 @@ import {
   Legend,
 } from "recharts";
 
-// Sample Bar Chart Analytics Data
-const chartData = [
-  { day: "Mon", published: 2100, booked: 1820, oldBooked: 1500 },
-  { day: "Tue", published: 2450, booked: 2100, oldBooked: 1750 },
-  { day: "Wed", published: 2300, booked: 1950, oldBooked: 1680 },
-  { day: "Thu", published: 2800, booked: 2400, oldBooked: 1900 },
-  { day: "Fri", published: 3400, booked: 2980, oldBooked: 2200 },
-  { day: "Sat", published: 1900, booked: 1450, oldBooked: 1300 },
-  { day: "Sun", published: 1500, booked: 1100, oldBooked: 950 },
-];
-
 export default function AnalyticsPage() {
-  const [timeRange, setTimeRange] = useState("7d");
-  const [compareMode, setCompareMode] = useState<"prev_period" | "prior_year">(
-    "prev_period"
+  const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d" | "90d">("7d");
+  const [compareMode, setCompareMode] = useState<"vs_previous" | "vs_prior_year">(
+    "vs_previous"
   );
 
-  const isMonth = timeRange === "30d" || timeRange === "90d";
+  // Map local state to API Query parameters
+  const queryParams: AnalyticsQueryParams = {
+    timeframe: timeRange.toUpperCase() as AnalyticsQueryParams["timeframe"],
+    comparison: compareMode,
+  };
+
+  // React Query Hook
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ["platform-performance", queryParams],
+    queryFn: () => analyticsService.getPlatformPerformance(queryParams),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    select: (res) => res.data, // Extract data payload directly
+  });
+
+  if (isError) {
+    return (
+      <div className="p-8 min-h-screen flex flex-col items-center justify-center text-center space-y-4">
+        <div className="p-3 rounded-full bg-rose-500/10 text-rose-500">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold">Failed to load analytics</h2>
+        <p className="text-sm text-slate-500 dark:text-gray-400">
+          {error instanceof Error ? error.message : "An error occurred while fetching data."}
+        </p>
+        <button
+          onClick={() => refetch()}
+          className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 transition"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const kpis = data?.kpis;
+  const bookingVelocity = data?.booking_velocity;
+  const capacityBreakdown = data?.capacity_breakdown;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-8 min-h-screen bg-slate-50 dark:bg-[#090C10] text-slate-900 dark:text-gray-100 transition-colors duration-300 max-w-[1600px] mx-auto">
-      
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 min-h-screen bg-slate-50 dark:bg-[#090C10] text-slate-900 dark:text-gray-100 transition-colors duration-300 max-w-[1600px] mx-auto">
+
       {/* 1. Header & Interactive Range Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-6">
         <div>
@@ -60,14 +90,14 @@ export default function AnalyticsPage() {
               <Activity className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              Platform Performance
+              {data?.overview.title || "Platform Performance"}
             </h1>
             <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30">
-              <Sparkles className="w-3 h-3" /> Real-time
+              {isLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />} Real-time
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-gray-400 mt-1 font-medium">
-            Comparative insights across user growth, ride conversions, seat occupancy, and revenue streams.
+            {data?.overview.subtitle || "Comparative insights across user growth, ride conversions, seat occupancy, and revenue streams."}
           </p>
         </div>
 
@@ -76,22 +106,20 @@ export default function AnalyticsPage() {
           {/* Comparison Mode Toggle */}
           <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 text-xs font-bold backdrop-blur-md">
             <button
-              onClick={() => setCompareMode("prev_period")}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                compareMode === "prev_period"
+              onClick={() => setCompareMode("vs_previous")}
+              className={`px-3 py-1.5 rounded-lg transition-all ${compareMode === "vs_previous"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
                   : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               vs Previous
             </button>
             <button
-              onClick={() => setCompareMode("prior_year")}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                compareMode === "prior_year"
+              onClick={() => setCompareMode("vs_prior_year")}
+              className={`px-3 py-1.5 rounded-lg transition-all ${compareMode === "vs_prior_year"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
                   : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               vs Prior Year
             </button>
@@ -99,15 +127,14 @@ export default function AnalyticsPage() {
 
           {/* Time Filter Pills */}
           <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 backdrop-blur-md">
-            {["24h", "7d", "30d", "90d"].map((range) => (
+            {(["24h", "7d", "30d", "90d"] as const).map((range) => (
               <button
                 key={range}
                 onClick={() => setTimeRange(range)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${
-                  timeRange === range
+                className={`px-3 py-1.5 rounded-lg text-xs font-extrabold uppercase transition-all ${timeRange === range
                     ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
                     : "text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 {range}
               </button>
@@ -125,13 +152,13 @@ export default function AnalyticsPage() {
       {/* 2. KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Revenue */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -2 }}
           className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-emerald-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">
-              Total Revenue
+              {kpis?.total_revenue.label || "TOTAL REVENUE"}
             </span>
             <div className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <DollarSign className="w-4 h-4" />
@@ -139,28 +166,28 @@ export default function AnalyticsPage() {
           </div>
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              {isMonth ? "$142,850" : "$38,420"}
+              {isLoading ? "---" : kpis?.total_revenue.formatted_value}
             </h3>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold text-emerald-700 bg-emerald-100/80 dark:bg-emerald-500/10 dark:text-emerald-400 flex items-center gap-0.5">
                 <ArrowUpRight className="w-3.5 h-3.5" />
-                {compareMode === "prev_period" ? "+14.2%" : "+28.6%"}
+                +{kpis?.total_revenue.percentage_change}%
               </span>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">
-                {compareMode === "prev_period" ? "vs prior period" : "vs YoY"}
+                {kpis?.total_revenue.comparison_label}
               </span>
             </div>
           </div>
         </motion.div>
 
         {/* Card 2: Rides Conversion Rate */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -2 }}
-          className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-blue-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
+          className="p-5 rounded-2xl  from-blue-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-blue-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">
-              Rides Conversion Rate
+              {kpis?.rides_conversion_rate.label || "RIDES CONVERSION RATE"}
             </span>
             <div className="p-2.5 rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20">
               <Car className="w-4 h-4" />
@@ -168,28 +195,28 @@ export default function AnalyticsPage() {
           </div>
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              81.4%
+              {isLoading ? "---" : kpis?.rides_conversion_rate.formatted_value}
             </h3>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold text-blue-700 bg-blue-100/80 dark:bg-blue-500/10 dark:text-blue-400 flex items-center gap-0.5">
                 <ArrowUpRight className="w-3.5 h-3.5" />
-                +3.8%
+                +{kpis?.rides_conversion_rate.percentage_change}%
               </span>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">
-                12.4k booked / 15.3k published
+                {kpis?.rides_conversion_rate.sub_text}
               </span>
             </div>
           </div>
         </motion.div>
 
         {/* Card 3: Active Platform Users */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -2 }}
-          className="p-5 rounded-2xl bg-gradient-to-br from-violet-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-violet-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
+          className="p-5 rounded-2xl bg-linear-to-br from-violet-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-violet-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">
-              Active Platform Users
+              {kpis?.active_platform_users.label || "ACTIVE PLATFORM USERS"}
             </span>
             <div className="p-2.5 rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/20">
               <Users className="w-4 h-4" />
@@ -197,28 +224,28 @@ export default function AnalyticsPage() {
           </div>
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              24,910
+              {isLoading ? "---" : kpis?.active_platform_users.formatted_value}
             </h3>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold text-violet-700 bg-violet-100/80 dark:bg-violet-500/10 dark:text-violet-400 flex items-center gap-0.5">
                 <ArrowUpRight className="w-3.5 h-3.5" />
-                +8.5%
+                +{kpis?.active_platform_users.percentage_change}%
               </span>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">
-                19.2k Riders • 5.7k Drivers
+                {kpis?.active_platform_users.breakdown.riders} Riders • {kpis?.active_platform_users.breakdown.drivers} Drivers
               </span>
             </div>
           </div>
         </motion.div>
 
         {/* Card 4: Avg Occupancy Rate */}
-        <motion.div 
+        <motion.div
           whileHover={{ y: -2 }}
           className="p-5 rounded-2xl bg-gradient-to-br from-amber-50/50 via-white to-slate-50 dark:from-[#0B0F17] dark:via-[#090C10] dark:to-[#0B0F17] border border-amber-200/60 dark:border-white/10 shadow-sm space-y-3 relative overflow-hidden backdrop-blur-md"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-gray-400">
-              Avg Occupancy Rate
+              {kpis?.avg_occupancy_rate.label || "AVG OCCUPANCY RATE"}
             </span>
             <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               <Zap className="w-4 h-4" />
@@ -226,15 +253,15 @@ export default function AnalyticsPage() {
           </div>
           <div>
             <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              3.2 / 4
+              {isLoading ? "---" : kpis?.avg_occupancy_rate.formatted_value}
             </h3>
             <div className="flex items-center gap-1.5 mt-2">
               <span className="px-2 py-0.5 rounded-md text-xs font-extrabold text-amber-700 bg-amber-100/80 dark:bg-amber-500/10 dark:text-amber-400 flex items-center gap-0.5">
                 <ArrowDownRight className="w-3.5 h-3.5" />
-                -0.1 seats
+                {kpis?.avg_occupancy_rate.change_value} {kpis?.avg_occupancy_rate.change_unit}
               </span>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">
-                Target: 3.5 seats per car
+                {kpis?.avg_occupancy_rate.target_text}
               </span>
             </div>
           </div>
@@ -243,17 +270,17 @@ export default function AnalyticsPage() {
 
       {/* 3. Main Chart Row 1: Revenue vs Rides & Capacity Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* Interactive Bar Chart Section */}
         <div className="lg:col-span-2 p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-blue-500" />
-                Revenue & Ride Booking Velocity
+                {bookingVelocity?.title || "Revenue & Ride Booking Velocity"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
-                Comparison of total rides offered versus actual passenger seat conversions
+                {bookingVelocity?.description}
               </p>
             </div>
           </div>
@@ -261,7 +288,7 @@ export default function AnalyticsPage() {
           {/* Recharts Bar Chart Container */}
           <div className="h-72 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={bookingVelocity?.chart_data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} fontWeight={600} />
                 <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} fontWeight={600} />
                 <Tooltip
@@ -274,12 +301,12 @@ export default function AnalyticsPage() {
                     boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
                   }}
                 />
-                <Legend 
+                <Legend
                   wrapperStyle={{ paddingTop: "15px", fontSize: "12px", fontWeight: "600" }}
                 />
-                <Bar dataKey="published" name="Rides Published" fill="#3B82F6" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="booked" name="Rides Booked" fill="#10B981" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="oldBooked" name="Prior Period Target" fill="#94A3B8" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="rides_published" name="Rides Published" fill="#3B82F6" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="rides_booked" name="Rides Booked" fill="#10B981" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="prior_period_target" name="Prior Period Target" fill="#94A3B8" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -290,7 +317,7 @@ export default function AnalyticsPage() {
               Prior period baseline included for velocity calculation
             </span>
             <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
-              Average Fill Yield: 81.2%
+              Average Fill Yield: {bookingVelocity?.average_fill_yield}%
             </span>
           </div>
         </div>
@@ -300,10 +327,10 @@ export default function AnalyticsPage() {
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <PieChartIcon className="w-5 h-5 text-violet-500" />
-              Ride Capacity Breakdown
+              {capacityBreakdown?.title || "Ride Capacity Breakdown"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
-              Occupancy rates per published ride departure
+              {capacityBreakdown?.description}
             </p>
           </div>
 
@@ -311,7 +338,9 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-center my-2">
             <div className="relative w-44 h-44 rounded-full bg-[conic-gradient(#3b82f6_0deg_180deg,#10b981_180deg_270deg,#f59e0b_270deg_330deg,#ef4444_330deg_360deg)] flex items-center justify-center p-4 shadow-xl hover:scale-105 transition-transform">
               <div className="w-32 h-32 rounded-full bg-white dark:bg-[#090C10] flex flex-col items-center justify-center text-center shadow-inner">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">15.3k</span>
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
+                  {capacityBreakdown?.formatted_total_rides}
+                </span>
                 <span className="text-[10px] text-slate-400 dark:text-gray-400 uppercase tracking-widest font-bold">
                   Total Rides
                 </span>
@@ -319,46 +348,26 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Interactive Donut Legend Breakdown */}
+          {/* Dynamic Donut Legend Breakdown */}
           <div className="space-y-2 text-xs font-bold">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-slate-700 dark:text-gray-200">Full (3-4 Passengers)</span>
+            {capacityBreakdown?.segments.map((segment) => (
+              <div key={segment.key} className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                  <span className="text-slate-700 dark:text-gray-200">{segment.label}</span>
+                </div>
+                <span className="font-mono text-slate-900 dark:text-gray-300">
+                  {segment.percentage}% ({segment.formatted_count})
+                </span>
               </div>
-              <span className="font-mono text-slate-900 dark:text-gray-300">50% (7,665)</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-slate-700 dark:text-gray-200">Partial (1-2 Passengers)</span>
-              </div>
-              <span className="font-mono text-slate-900 dark:text-gray-300">25% (3,832)</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-500" />
-                <span className="text-slate-700 dark:text-gray-200">Solo (Driver Only)</span>
-              </div>
-              <span className="font-mono text-slate-900 dark:text-gray-300">16.6% (2,545)</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500" />
-                <span className="text-slate-700 dark:text-gray-200">Cancelled Rides</span>
-              </div>
-              <span className="font-mono text-slate-900 dark:text-gray-300">8.4% (1,288)</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* 4. Main Chart Row 2: Demographics & Top Corridors */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
+
         {/* User Acquisition Split Card */}
         <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-6">
           <div className="flex items-center justify-between">
@@ -408,7 +417,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Top Routes & Corridors */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-5">
+        <div className="p-5 sm:p-6 rounded-2xl bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-5">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">

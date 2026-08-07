@@ -9,7 +9,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen w-full flex bg-slate-50 dark:bg-[#05070A] transition-colors duration-300">
+    <div className="min-h-screen w-full flex  dark:bg-[#05070A] transition-colors duration-300">
       {/* Left Branding & Visual Hero Panel (Visible on lg screens) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-[#090C10] border-r border-slate-800 dark:border-white/10 p-12 flex-col justify-between overflow-hidden select-none">
         
@@ -61,7 +61,7 @@ export default function AuthLayout({
 
           {/* Quick Metrics Cards */}
           <div className="grid grid-cols-2 gap-4 max-w-md">
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-white/20 transition">
+            <div className="p-4 rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md hover:border-white/20 transition">
               <div className="flex items-center gap-2 text-blue-400 text-xs font-bold mb-1.5">
                 <Users2 className="w-4 h-4" /> Driver Approvals
               </div>
@@ -69,7 +69,7 @@ export default function AuthLayout({
               <p className="text-[11px] text-slate-400 font-medium mt-0.5">Automated KYC Checks</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-md hover:border-white/20 transition">
+            <div className="p-4 rounded-2xl bg-white/3 border border-white/10 backdrop-blur-md hover:border-white/20 transition">
               <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-1.5">
                 <Route className="w-4 h-4" /> Active Routes
               </div>

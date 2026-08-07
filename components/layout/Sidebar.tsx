@@ -310,7 +310,7 @@ export default function Sidebar() {
 
         {/* Bottom Actions Section */}
         <div className="space-y-3.5 pt-4 border-t border-gray-200 dark:border-white/10">
-          <motion.button
+          {/* <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className={`w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-blue-600/30 transition-all duration-200 ${isCollapsed ? "px-2" : ""
@@ -318,7 +318,7 @@ export default function Sidebar() {
           >
             <Plus className="w-5 h-5" />
             {!isCollapsed && <span>New Dispatch</span>}
-          </motion.button>
+          </motion.button> */}
 
           <div className="flex items-center justify-between gap-2 pt-1">
             {mounted && (
