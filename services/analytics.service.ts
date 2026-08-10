@@ -15,7 +15,7 @@ export const analyticsService = {
   ): Promise<AnalyticsApiResponse<PlatformPerformanceData>> => {
     const response = await apiClient.get<
       AnalyticsApiResponse<PlatformPerformanceData>
-    >("/dashboard/analytics", {
+    >("/admin/dashboard/analytics", {
       params,
     });
 

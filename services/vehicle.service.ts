@@ -10,18 +10,18 @@ import {
 
 export const vehicleService = {
   getAllVehicles: async (params?: GetVehiclesParams): Promise<VehicleListResponse> => {
-    const response = await apiClient.get<VehicleListResponse>("/vehicles", { params });
+    const response = await apiClient.get<VehicleListResponse>("/admin/vehicles", { params });
     return response.data;
   },
 
 
   getVehicleById: async (id: number | string): Promise<VehicleDetailResponse> => {
-    const response = await apiClient.get<VehicleDetailResponse>(`/vehicles/${id}`);
+    const response = await apiClient.get<VehicleDetailResponse>(`/admin/vehicles/${id}`);
     return response.data;
   },
 
   getVehiclesByUserId: async (userId: number | string): Promise<UserVehiclesResponse> => {
-    const response = await apiClient.get<UserVehiclesResponse>(`/vehicles/user/${userId}`);
+    const response = await apiClient.get<UserVehiclesResponse>(`/admin/vehicles/user/${userId}`);
     return response.data;
   },
 
@@ -31,7 +31,7 @@ export const vehicleService = {
     payload: UpdateVehicleStatusPayload
   ): Promise<UpdateVehicleStatusResponse> => {
     const response = await apiClient.patch<UpdateVehicleStatusResponse>(
-      `/vehicles/${id}`,
+      `/admin/vehicles/${id}`,
       payload
     );
     return response.data;

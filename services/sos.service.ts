@@ -8,11 +8,8 @@ import {
 } from "@/types/sos.types";
 
 const SosService = {
-  /**
-   * Fetch all SOS alerts with optional filtering and pagination
-   */
   async getSosAlerts(params?: GetSosParams): Promise<GetSosResponse> {
-    const response = await apiClient.get<GetSosResponse>("/sos", {
+    const response = await apiClient.get<GetSosResponse>("/admin/sos", {
       params,
     });
     return response.data;
@@ -34,7 +31,7 @@ const SosService = {
     payload: UpdateSosStatusPayload,
   ): Promise<UpdateSosStatusResponse> {
     const response = await apiClient.patch<UpdateSosStatusResponse>(
-      `/sos/${id}/status`,
+      `/admin/sos/${id}/status`,
       payload,
     );
     return response.data;

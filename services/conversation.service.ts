@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/api";
 import { ApiResponse, Conversation, ConversationDetailResponse, CreateConversationPayload } from "@/types/conversation.types";
 
-const BASE_URL = '/conversations';
+const BASE_URL = '/admin/conversations';
 
 export const conversationService = {
 

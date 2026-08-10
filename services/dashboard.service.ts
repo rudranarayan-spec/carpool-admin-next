@@ -5,7 +5,7 @@ export const dashboardService = {
 
   getDashboardBootstrap: async (): Promise<DashboardBootstrapResponse> => {
     const response = await apiClient.get<DashboardBootstrapResponse>(
-      "/dashboard/bootstrap"
+      "/admin/dashboard/bootstrap"
     );
     return response.data;
   },

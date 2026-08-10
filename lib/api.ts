@@ -27,7 +27,7 @@ function getAuthToken(): string | null {
 }
 
 export const apiClient = axios.create({
-  baseURL: "http://localhost:5000/api/v1/admin",
+  baseURL: process.env.NEXT_PUBLIC_SOCKET_URL,
   headers: {
     "Content-Type": "application/json",
   },

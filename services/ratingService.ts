@@ -6,14 +6,14 @@ import { DeleteRatingResponse, GetRatingsParams, GetRatingsResponse } from "@/ty
 const ratingService = {
 
   async getRatings(params?: GetRatingsParams): Promise<GetRatingsResponse> {
-    const response = await apiClient.get<GetRatingsResponse>("/ratings", {
+    const response = await apiClient.get<GetRatingsResponse>("/admin/ratings", {
       params,
     });
     return response.data;
   },
 
   async deleteRating(id: number): Promise<DeleteRatingResponse> {
-    const response = await apiClient.delete<DeleteRatingResponse>(`/ratings/${id}`);
+    const response = await apiClient.delete<DeleteRatingResponse>(`/admin/ratings/${id}`);
     return response.data;
   },
 };

@@ -77,7 +77,7 @@ export const useAdminNotifications = () => {
     }
 
     // 2. Initialize Socket instance
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:5000";
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "https://carpool-node-backend-app.onrender.com" ||"http://localhost:5000";
 
     const socket = io(socketUrl, {
       transports: ["websocket"],

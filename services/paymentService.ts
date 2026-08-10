@@ -23,7 +23,7 @@ export const paymentService = {
     search,
   }: GetAdminPaymentsParams = {}): Promise<GetAdminPaymentsResponse> {
     const response = await apiClient.get<GetAdminPaymentsResponse>(
-      "/payments",
+      "/admin/payments",
       {
         params: {
           page,
@@ -42,7 +42,7 @@ export const paymentService = {
     paymentId: string | number,
   ): Promise<GetAdminPaymentByIdResponse> {
     const response = await apiClient.get<GetAdminPaymentByIdResponse>(
-      `/payments/${paymentId}`,
+      `/admin/payments/${paymentId}`,
     );
 
     return response.data;
@@ -53,7 +53,7 @@ export const paymentService = {
     payload: UpdatePaymentStatusPayload,
   ): Promise<UpdatePaymentStatusResponse> {
     const response = await apiClient.patch<UpdatePaymentStatusResponse>(
-      `/payments/${paymentId}/`,
+      `/admin/payments/${paymentId}/`,
       payload,
     );
     return response.data;
@@ -65,7 +65,7 @@ export const paymentService = {
     payload: ProcessRefundPayload,
   ): Promise<ProcessRefundResponse> {
     const response = await apiClient.post<ProcessRefundResponse>(
-      `/payments/${paymentId}/refund`,
+      `/admin/payments/${paymentId}/refund`,
       payload,
     );
 
@@ -79,7 +79,7 @@ export const paymentService = {
     status,
   }: GetPassengerTransactionsParams): Promise<GetPassengerTransactionsResponse> {
     const response = await apiClient.get<GetPassengerTransactionsResponse>(
-      `/payments/passenger/${passengerId}`,
+      `/admin/payments/passenger/${passengerId}`,
       {
         params: {
           page,
@@ -93,7 +93,7 @@ export const paymentService = {
   },
 
   async getRefundRequests(params?: GetRefundRequestsParams): Promise<GetRefundRequestsResponse> {
-    const response = await apiClient.get("/refund-requests", { params });
+    const response = await apiClient.get("/admin/refund-requests", { params });
     return response.data;
   },
 

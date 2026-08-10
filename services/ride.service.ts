@@ -28,7 +28,7 @@ const parseApiError = (error: unknown): string => {
 export const RideService = {
   getAllRides: async (): Promise<RideListItem[]> => {
     try {
-      const response = await apiClient.get<FetchRidesResponse>("/rides");
+      const response = await apiClient.get<FetchRidesResponse>("/admin/rides");
 
       if (response.data.status === "success") {
         return response.data.data;
@@ -43,7 +43,7 @@ export const RideService = {
 
   getRideById: async (id: number | string): Promise<RideDetails> => {
     try {
-      const response = await apiClient.get<FetchSingleRideResponse>(`/rides/${id}`);
+      const response = await apiClient.get<FetchSingleRideResponse>(`/admin/rides/${id}`);
 
       if (response.data.status === "success") {
         return response.data.data;
@@ -58,7 +58,7 @@ export const RideService = {
 
   createRide: async (payload: CreateRidePayload): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.post<MutationRideResponse>("/rides", payload);
+      const response = await apiClient.post<MutationRideResponse>("/admin/rides", payload);
       return response.data;
     } catch (error: unknown) {
       console.error("Error creating ride:", parseApiError(error));
@@ -68,7 +68,7 @@ export const RideService = {
 
   updateRide: async (id: number | string, payload: UpdateRidePayload): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.patch<MutationRideResponse>(`/rides/${id}`, payload);
+      const response = await apiClient.patch<MutationRideResponse>(`/admin/rides/${id}`, payload);
       return response.data;
     } catch (error: unknown) {
       console.error(`Error updating ride #${id}:`, parseApiError(error));
@@ -78,7 +78,7 @@ export const RideService = {
 
   deleteRide: async (id: number | string): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.delete<MutationRideResponse>(`/rides/${id}`);
+      const response = await apiClient.delete<MutationRideResponse>(`/admin/rides/${id}`);
       return response.data;
     } catch (error: unknown) {
       console.error(`Error deleting ride #${id}:`, parseApiError(error));
@@ -90,7 +90,7 @@ export const RideService = {
   getRidesByDriverId: async (driverId: number | string): Promise<DriverRideItem[]> => {
     try {
       const response = await apiClient.get<FetchDriverRidesResponse>(
-        `/rides/driver/${driverId}`
+        `/admin/rides/driver/${driverId}`
       );
 
       if (response.data.success) {
@@ -108,7 +108,7 @@ export const RideService = {
   getRidesByPassengerId: async (passengerId: number | string): Promise<PassengerRideItem[]> => {
     try {
       const response = await apiClient.get<FetchPassengerRidesResponse>(
-        `/rides/passenger/${passengerId}`
+        `/admin/rides/passenger/${passengerId}`
       );
 
       if (response.data.success) {
@@ -125,7 +125,7 @@ export const RideService = {
   getAdminRideDetails: async (rideId: number | string): Promise<AdminRideDetailsData> => {
     try {
       const response = await apiClient.get<FetchAdminRideDetailsResponse>(
-        `/rides/details/${rideId}`
+        `/admin/rides/details/${rideId}`
       );
 
       if (response.data.success) {

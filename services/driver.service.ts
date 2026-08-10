@@ -47,7 +47,7 @@ export const fetchDrivers = async ({
   if (status && status !== "all") params.status = status;
   if (search) params.search = search;
 
-  const response = await apiClient.get<DriversApiResponse>("/drivers", {
+  const response = await apiClient.get<DriversApiResponse>("/admin/drivers", {
     params,
   });
   return response.data;
@@ -84,7 +84,7 @@ export function useUpdateDriverActivityStatus() {
       status: DriverStatus;
       reason?: string;
     }) => {
-      const response = await apiClient.patch(`/drivers/${driverId}`, {
+      const response = await apiClient.patch(`/admin/drivers/${driverId}`, {
         status,
         reason,
       });
@@ -101,7 +101,7 @@ export const DriverApproval = {
     params?: GetPendingDriversParams,
   ): Promise<PendingDriversResponse> => {
     const response = await apiClient.get<PendingDriversResponse>(
-      "/drivers/pending",
+      "/admin/drivers/pending",
       {
         params: {
           page: params?.page || 1,
@@ -120,7 +120,7 @@ export const DriverApproval = {
     status,
   }: VerifyDocumentRequest): Promise<ApiResponse> {
     const response = await apiClient.patch<ApiResponse>(
-      `/drivers/${driverId}/verify-document`,
+      `/admin/drivers/${driverId}/verify-document`,
       {
         docType,
         status,
@@ -134,7 +134,7 @@ export const DriverApproval = {
     status,
   }: UpdateDriverStatusRequest): Promise<ApiResponse> {
     const response = await apiClient.patch<ApiResponse>(
-      `/drivers/${driverId}/status`,
+      `/admin/drivers/${driverId}/status`,
       {
         status,
       },

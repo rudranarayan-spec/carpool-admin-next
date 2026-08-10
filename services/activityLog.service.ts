@@ -99,7 +99,7 @@ export async function getActivityLogs(params: GetLogsParams = {}): Promise<{
   }
 
   // Uses configured apiClient; header Authorization is automatically attached
-  const response = await apiClient.get<ApiResponse>("/activity-logs", {
+  const response = await apiClient.get<ApiResponse>("/admin/activity-logs", {
     params: queryParams,
   });
 

@@ -96,7 +96,7 @@ export const userService = {
       queryParams.status = params.status;
     }
 
-    const response = await apiClient.get<UsersApiResponse>("/users", {
+    const response = await apiClient.get<UsersApiResponse>("/admin/users", {
       params: queryParams,
     });
 
@@ -107,7 +107,7 @@ export const userService = {
    * Fetches single user detail
    */
   async getUserDetails(userId: string | number): Promise<UserDetails> {
-    const response = await apiClient.get<SingleUserApiResponse>(`/users/${userId}`);
+    const response = await apiClient.get<SingleUserApiResponse>(`/admin/users/${userId}`);
     return response.data.data.user;
   },
 };

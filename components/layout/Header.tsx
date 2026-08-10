@@ -83,7 +83,7 @@ export default function Header() {
   };
 
   return (
-    <header className="h-18 min-h-[4.5rem] border-b border-gray-200/80 dark:border-white/10 px-4 sm:px-6 lg:px-8 flex items-center justify-between bg-white/80 dark:bg-[#090C10]/80 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 select-none">
+    <header className="h-18 min-h-18 border-b border-gray-200/80 dark:border-white/10 px-4 sm:px-6 lg:px-8 flex items-center justify-between bg-white/80 dark:bg-[#090C10]/80 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 select-none">
       {/* 1. Left Section: Title / Brand & Navigation Tabs */}
       <div className="flex items-center gap-6 lg:gap-10">
         <Link href="/" className="flex items-center gap-3 group">
@@ -163,7 +163,7 @@ export default function Header() {
 
         {/* Fixed Responsive Notification Dropdown Modal */}
         {isNotificationsOpen && (
-          <div className="fixed sm:absolute top-[4.5rem] right-4 left-4 sm:left-auto sm:right-0 sm:w-80 md:w-96 bg-white dark:bg-[#0D1117] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-2xl">
+          <div className="fixed sm:absolute top-18 right-4 left-4 sm:left-auto sm:right-0 sm:w-80 md:w-96 bg-white dark:bg-[#0D1117] border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden backdrop-blur-2xl">
             {/* Popover Header */}
             <div className="p-4 border-b border-gray-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export default function Header() {
             </div>
 
             {/* Notification Items List */}
-            <div className="max-h-[320px] overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
+            <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-white/5">
               {notifications.length === 0 ? (
                 <div className="p-6 text-center text-xs text-gray-400">
                   No notifications to show.
@@ -204,8 +204,8 @@ export default function Header() {
                 notifications.map((item) => (
                   <div
                     key={item.id}
-                    className={`p-4 flex gap-3 transition hover:bg-gray-50 dark:hover:bg-white/[0.02] ${
-                      item.unread ? "bg-blue-500/[0.03]" : ""
+                    className={`p-4 flex gap-3 transition hover:bg-gray-50 dark:hover:bg-white/2 ${
+                      item.unread ? "bg-blue-500/3" : ""
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
@@ -240,7 +240,7 @@ export default function Header() {
             {/* Popover Footer */}
             <div className="p-3 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/10 text-center">
               <Link
-                href="/logs"
+                href="/activity-logs"
                 onClick={() => setIsNotificationsOpen(false)}
                 className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition"
               >
@@ -263,7 +263,7 @@ export default function Header() {
             </p>
           </div>
 
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-400/30 flex items-center justify-center text-xs font-black text-white shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-blue-600 to-indigo-600 border border-blue-400/30 flex items-center justify-center text-xs font-black text-white shadow-md shadow-blue-600/20 group-hover:scale-105 transition-transform">
             AU
           </div>
         </div>
