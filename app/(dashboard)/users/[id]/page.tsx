@@ -20,14 +20,18 @@ import {
   Hash,
   Fuel,
   CheckCircle2,
+  ShieldAlert,
+  UserX,
+  UserCheck,
 } from 'lucide-react';
 import { useParams, useRouter } from "next/navigation";
 import userService from '@/services/userService';
 import RideService from '@/services/ride.service';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Image from 'next/image';
 import { vehicleService } from '@/services/vehicle.service';
 import { paymentService } from '@/services/paymentService';
+import { toast } from 'sonner';
 
 
 type TabType = 'overview' | 'rides' | 'bookings' | "vehicles" | 'documents' | 'payments';
@@ -39,6 +43,7 @@ export default function UserDetailsPage() {
   const router = useRouter();
 
   const params = useParams();
+  const queryClient = useQueryClient();
 
   const userId = params.id as string;
 
@@ -100,26 +105,33 @@ export default function UserDetailsPage() {
     enabled: !!userId && activeTab === "payments",
   });
 
+  const updateStatusMutation = useMutation({
+    mutationFn: (status: "active" | "inactive") =>
+      userService.updateUserStatus(userId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      toast.success("User profile updated successfully.")
+    },
+    onError: (err) => {
+      // Handle error (e.g., toast notification)
+      console.error("Status update failed", err);
+    }
+  });
+
+  // 4. Block User Mutation
+  const blockUserMutation = useMutation({
+    mutationFn: () => userService.blockUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+      toast.success("User profile sets to Blocked")
+    },
+    onError: (err) => {
+      console.error("Block user failed", err);
+    }
+  });
+
   const userPayments = paymentsResponse?.data ?? [];
 
-  // Fallback Mock Metrics / Bio (To be updated via backend later)
-  const mockMetrics = {
-    totalEarned: 3420.5,
-    totalSpent: 480.0,
-    ridesPublished: 42,
-    bookingsMade: 12,
-    completionRate: '98%',
-    rating: 4.9,
-    totalReviews: 84,
-    bio: 'Frequent commuter between Seattle and Portland. Love quiet rides and punctual co-travelers.',
-    vehicle: {
-      make: 'Tesla',
-      model: 'Model 3',
-      year: '2023',
-      plate: '7XYZ89',
-      color: 'Midnight Silver',
-    },
-  };
 
   if (isLoading) {
     return (
@@ -221,7 +233,14 @@ export default function UserDetailsPage() {
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-2xl font-bold tracking-tight capitalize">{userData.name}</h1>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${userData.status.toLowerCase() === "active"
+                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                      : userData.status.toLowerCase() === "blocked"
+                        ? "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 border-rose-300 dark:border-rose-800"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                      }`}
+                  >
                     {capitalize(userData.status)}
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -252,11 +271,74 @@ export default function UserDetailsPage() {
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto justify-end border-t md:border-t-0 pt-4 md:pt-0 border-slate-200 dark:border-white/15">
-              <button className="px-4 py-2 text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                Edit User
+              {/* TOGGLE ACTIVE / INACTIVE BUTTON */}
+              <button
+                disabled={updateStatusMutation.isPending || blockUserMutation.isPending}
+                onClick={() => {
+                  const nextStatus =
+                    userData.status.toLowerCase() === "active" ? "inactive" : "active";
+                  updateStatusMutation.mutate(nextStatus);
+                }}
+                className={`
+        relative inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl
+        transition-all duration-200 shadow-sm active:scale-95 disabled:opacity-50 disabled:pointer-events-none
+        ${userData.status.toLowerCase() === "active"
+                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 dark:hover:bg-amber-500/30 ring-2 ring-amber-500/10"
+                    : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/30 ring-2 ring-emerald-500/10"
+                  }
+      `}
+              >
+                {updateStatusMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Updating...</span>
+                  </>
+                ) : userData.status.toLowerCase() === "active" ? (
+                  <>
+                    <UserX className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                    <span>Set Inactive</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Set Active</span>
+                  </>
+                )}
               </button>
-              <button className="px-4 py-2 text-sm font-medium rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 hover:opacity-90 transition-opacity">
-                Suspend Account
+
+              {/* BLOCK ACCOUNT BUTTON */}
+              <button
+                disabled={
+                  blockUserMutation.isPending ||
+                  updateStatusMutation.isPending ||
+                  userData.status.toLowerCase() === "blocked"
+                }
+                onClick={() => blockUserMutation.mutate()}
+                className={`
+      relative inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl
+      transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none
+      ${userData.status.toLowerCase() === "blocked"
+                    ? "bg-slate-100 text-slate-400 border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-500"
+                    : "bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-md shadow-rose-500/20 ring-2 ring-rose-500/20"
+                  }
+    `}
+              >
+                {blockUserMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Blocking...</span>
+                  </>
+                ) : userData.status.toLowerCase() === "blocked" ? (
+                  <>
+                    <ShieldAlert className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Account Blocked</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>Block Account</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -272,7 +354,7 @@ export default function UserDetailsPage() {
               </div>
             </div>
             <div className="text-2xl font-bold mt-2">
-              ₹{mockMetrics.totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{userData.stats.totalEarned.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-1 font-medium">
               <TrendingUp className="w-3.5 h-3.5" /> Platform revenue share generated
@@ -287,10 +369,10 @@ export default function UserDetailsPage() {
               </div>
             </div>
             <div className="text-2xl font-bold mt-2">
-              ₹{mockMetrics.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              ₹{userData.stats.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <div className="text-xs text-slate-500 mt-1">
-              Across {mockMetrics.bookingsMade} rides booked
+              Across {userData.stats.bookingMade} rides booked
             </div>
           </div>
 
@@ -301,9 +383,9 @@ export default function UserDetailsPage() {
                 <Car className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold mt-2">{mockMetrics.ridesPublished}</div>
+            <div className="text-2xl font-bold mt-2">{userData.stats.ridesPublished}</div>
             <div className="text-xs text-slate-500 mt-1">
-              {mockMetrics.completionRate} trip completion rate
+              {userData.stats.completionRate} trip completion rate
             </div>
           </div>
 
@@ -314,9 +396,9 @@ export default function UserDetailsPage() {
                 <Award className="w-5 h-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold mt-2">★ {mockMetrics.rating}</div>
+            <div className="text-2xl font-bold mt-2">★ {userData.stats.rating}</div>
             <div className="text-xs text-slate-500 mt-1">
-              Based on {mockMetrics.totalReviews} total reviews
+              Based on {userData.stats.totalReviews} total reviews
             </div>
           </div>
         </div>
@@ -325,23 +407,25 @@ export default function UserDetailsPage() {
         <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/15 overflow-x-auto pb-1">
           {[
             { id: 'overview', label: 'Overview' },
-            { id: 'rides', label: 'Published Rides' },
-            { id: 'bookings', label: 'Bookings' },
-            { id: "vehicles", label: "Vehicles" },
+            { id: 'rides', label: 'Published Rides', hide: userData?.role?.toLowerCase() === 'passenger' },
+            { id: 'bookings', label: 'Bookings', hide: userData?.role?.toLowerCase() === 'driver' },
+            { id: 'vehicles', label: 'Vehicles' },
             { id: 'documents', label: `Documents (${userDocuments.length})` },
             { id: 'payments', label: 'Transactions & Payouts' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as TabType)}
-              className={`px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all ${activeTab === tab.id
-                ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ]
+            .filter((tab) => !tab.hide)
+            .map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as TabType)}
+                className={`px-4 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all ${activeTab === tab.id
+                    ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
+                  }`}
+              >
+                {tab.label}
+              </button>
+            ))}
         </div>
 
 

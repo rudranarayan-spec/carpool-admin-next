@@ -19,12 +19,9 @@ import {
   User,
   Zap,
 } from "lucide-react";
-import userService, {
-  UserListItem,
-  UserDetails,
-  UserStats,
-} from "@/services/userService";
+import userService from "@/services/userService";
 import Image from "next/image";
+import { UserDetails, UserListItem, UserStats } from "@/types/userService";
 
 export default function UserManagementPage() {
   // --- States ---
