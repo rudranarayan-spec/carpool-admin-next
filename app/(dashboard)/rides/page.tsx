@@ -794,8 +794,8 @@ export default function RideManagementPage() {
                     {/* Driver Profile (Indigo Theme) */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5 px-1">
-                        <User className="w-3.5 h-3.5 text-indigo-500" />
-                        <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        <User className="w-3.5 h-3.5 text-red-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
                           Driver Information
                         </h3>
                       </div>
@@ -810,7 +810,7 @@ export default function RideManagementPage() {
                             <p className="font-bold text-slate-900 dark:text-white capitalize text-sm truncate">
                               {selectedRide.driver_name}
                             </p>
-                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+                            <p className="text-xs text-red-600 dark:text-red-400 font-semibold">
                               Driver ID: #{selectedRide.driver_id}
                             </p>
                           </div>
@@ -841,7 +841,7 @@ export default function RideManagementPage() {
                     {/* Vehicle Details (Violet Theme) */}
                     <div className="space-y-2">
                       <div className="flex items-center gap-1.5 px-1">
-                        <Car className="w-3.5 h-3.5 text-violet-500" />
+                        <Car className="w-3.5 h-3.5 text-gray-500" />
                         <h3 className="text-xs font-bold uppercase tracking-wider text-violet-600 dark:text-violet-400">
                           Vehicle Specs
                         </h3>
@@ -855,7 +855,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
-                            {selectedRide.model}
+                            {selectedRide.vehicle_model}
                           </p>
                         </div>
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
@@ -866,7 +866,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs uppercase truncate">
-                            {selectedRide.registration_number}
+                            {selectedRide.vehicle_registration_number}
                           </p>
                         </div>
                         <div className="p-3 bg-violet-50/40 dark:bg-violet-950/10 rounded-2xl border border-violet-200/60 dark:border-violet-900/30">
@@ -877,7 +877,7 @@ export default function RideManagementPage() {
                             </p>
                           </div>
                           <p className="font-bold text-slate-900 dark:text-white text-xs capitalize truncate">
-                            {selectedRide.fuel_type}
+                            {selectedRide.vehicle_fuel_type}
                           </p>
                         </div>
                       </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState } from "react";
@@ -6,37 +7,34 @@ import {
   ArrowLeft,
   MapPin,
   MapPinOff,
-  Calendar,
   Clock,
   Car,
-  User,
   Phone,
   Mail,
-  IndianRupee,
-  ShieldCheck,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
   Users,
-  CreditCard,
   Receipt,
   History,
   Navigation,
   Sparkles,
   ExternalLink,
   Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import RideService from "@/services/ride.service";
 import { formatDate } from "@/lib/dateFormatter";
-
-// --- Main Page Component ---
+import { pdf } from "@react-pdf/renderer";
+import { RideInvoicePDF } from "@/components/pdf/RideInvoicePDF";
 
 export default function RideDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const rideId = params.id as string;
+
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const {
     data: ride,
@@ -49,12 +47,41 @@ export default function RideDetailsPage() {
     enabled: !!rideId,
   });
 
+  // Handler for PDF Generation & Download
+  const handleDownloadInvoice = async () => {
+    if (!ride) return;
+
+    try {
+      setIsGeneratingPdf(true);
+
+      // 1. Generate blob using @react-pdf/renderer
+      const blob = await pdf(<RideInvoicePDF ride={ride} />).toBlob();
+
+      // 2. Create download URL
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice_Ride_${ride.header.ride_code || rideId}.pdf`;
+
+      // 3. Trigger automatic download
+      document.body.appendChild(link);
+      link.click();
+
+      // 4. Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to generate PDF invoice:", err);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F6F8FC] dark:bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-
           <p className="text-sm text-slate-500 dark:text-zinc-400">
             Loading ride details...
           </p>
@@ -68,17 +95,14 @@ export default function RideDetailsPage() {
       <div className="min-h-screen bg-[#F6F8FC] dark:bg-black flex items-center justify-center p-6">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 mx-auto text-rose-500 mb-3" />
-
           <h2 className="text-lg font-bold text-slate-900 dark:text-white">
             Unable to load ride
           </h2>
-
           <p className="text-sm text-slate-500 dark:text-zinc-400 mt-2">
             {error instanceof Error
               ? error.message
               : "Ride details could not be found."}
           </p>
-
           <button
             onClick={() => router.back()}
             className="mt-4 px-4 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-black text-sm font-semibold"
@@ -111,15 +135,26 @@ export default function RideDetailsPage() {
               </div>
               <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">
                 ID: #{ride.header.ride_code} • Created on{" "}
-                {/* {new Date(ride.header.created_at).toLocaleDateString("en-GB")} */}
                 {formatDate(ride.header.created_at)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" /> Download Invoice
+            <button
+              onClick={handleDownloadInvoice}
+              disabled={isGeneratingPdf}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white shadow-md shadow-blue-500/20 transition-all active:scale-95 flex items-center gap-2"
+            >
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" /> Download Invoice
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -150,17 +185,17 @@ export default function RideDetailsPage() {
                     <p className="text-[10px] font-extrabold uppercase text-slate-400">
                       Pickup Location
                     </p>
-
                     <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
                       {ride.route_schedule.pickup.location}
                     </p>
-
                     {ride.route_schedule.pickup.scheduled_at && (
                       <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         Scheduled:
                         <span className="font-semibold text-slate-700 dark:text-slate-300">
-                          {formatDate(ride.route_schedule.pickup.scheduled_at)}
+                          {formatDate(
+                            ride.route_schedule.pickup.scheduled_at
+                          )}
                         </span>
                       </p>
                     )}
@@ -177,18 +212,16 @@ export default function RideDetailsPage() {
                     <p className="text-[10px] font-extrabold uppercase text-slate-400">
                       Dropoff Location
                     </p>
-
                     <p className="text-sm font-bold text-slate-900 dark:text-white mt-0.5">
                       {ride.route_schedule.dropoff.location}
                     </p>
-
                     {ride.route_schedule.dropoff.estimated_arrival && (
                       <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         Estimated Arrival:
                         <span className="font-semibold text-slate-700 dark:text-slate-300">
                           {formatTime(
-                            ride.route_schedule.dropoff.estimated_arrival,
+                            ride.route_schedule.dropoff.estimated_arrival
                           )}
                         </span>
                       </p>
@@ -264,7 +297,7 @@ export default function RideDetailsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                    {ride.passenger_bookings.map((booking) => (
+                    {ride.passenger_bookings.map((booking: any) => (
                       <tr
                         key={booking.booking_id}
                         className="hover:bg-slate-50/50 dark:hover:bg-white/1"
@@ -305,7 +338,9 @@ export default function RideDetailsPage() {
                         </td>
                         <td className="py-3.5 px-2 text-right">
                           <div className="flex flex-col items-end gap-1">
-                            <BookingStatusBadge status={booking.booking_status} />
+                            <BookingStatusBadge
+                              status={booking.booking_status}
+                            />
                           </div>
                         </td>
                       </tr>
@@ -453,7 +488,7 @@ export default function RideDetailsPage() {
               </h2>
 
               <div className="relative pl-5 border-l border-slate-200 dark:border-white/10 space-y-5">
-                {ride.activity_logs.map((item, index) => (
+                {ride.activity_logs.map((item: any, index: number) => (
                   <div key={index} className="relative text-xs">
                     <div className="absolute -left-[25px] top-1 w-2 h-2 rounded-full bg-blue-500 ring-4 ring-white dark:ring-[#121824]" />
                     <p className="font-bold text-slate-900 dark:text-white">
@@ -508,9 +543,10 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold capitalize border ${styles[normalized] ??
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold capitalize border ${
+        styles[normalized] ??
         "bg-slate-500/10 text-slate-500 border-slate-500/20"
-        }`}
+      }`}
     >
       {icons[normalized] ?? <AlertCircle className="w-3.5 h-3.5" />}
       {status.replace("_", " ")}
@@ -552,9 +588,10 @@ function BookingStatusBadge({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${styles[normalized] ??
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase border ${
+        styles[normalized] ??
         "bg-slate-500/10 text-slate-500 dark:text-zinc-400 border-slate-500/20"
-        }`}
+      }`}
     >
       {icons[normalized] ?? <AlertCircle className="w-3 h-3" />}
 

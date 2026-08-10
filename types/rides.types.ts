@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Driver {
   driver_name: string;
   driver_email: string;
@@ -6,9 +7,9 @@ export interface Driver {
 }
 
 export interface Vehicle {
-  model: string;
-  registration_number: string;
-  fuel_type: string;
+  vehicle_model: string;
+  vehicle_registration_number: string;
+  vehicle_fuel_type: string;
   vehicle_color?: string;
 }
 
@@ -20,6 +21,7 @@ export interface RoutePoint {
 export type RideStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
 // Minimal Ride interface for list view (matches optimized SQL query)
 export interface RideListItem extends Driver, Vehicle {
+  [x: string]: any;
   id: number;
   driver_id: number;
   vehicle_id: number;
