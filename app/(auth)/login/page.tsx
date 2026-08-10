@@ -22,7 +22,7 @@ interface ApiErrorResponse {
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password");
+  const [password, setPassword] = useState("11");
   const [rememberMe, setRememberMe] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
