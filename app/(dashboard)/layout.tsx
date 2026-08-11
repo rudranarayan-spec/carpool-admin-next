@@ -35,7 +35,7 @@ export default function DashboardLayout({
           </div>
         )}
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <main className="flex-1 overflow-y-auto  space-y-6">
           {children}
           <Toaster position="top-right" richColors closeButton />
         </main>

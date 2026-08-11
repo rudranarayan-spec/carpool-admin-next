@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export interface Conversation {
   id: number;
   booking_id: number;
@@ -31,7 +33,15 @@ export interface ConversationMessage {
 }
 
 export interface ConversationDetailResponse {
-  conversation: Omit<Conversation, 'driver_email' | 'passenger_email' | 'source_address' | 'destination_address' | 'last_message' | 'last_message_at'>;
+  conversation: Omit<
+    Conversation,
+    | 'driver_email'
+    | 'passenger_email'
+    | 'source_address'
+    | 'destination_address'
+    | 'last_message'
+    | 'last_message_at'
+  >;
   messages: ConversationMessage[];
 }
 
@@ -42,8 +52,10 @@ export interface PaginationMeta {
   limit: number;
 }
 
-export interface ApiResponse<T> {
+export interface ApiResponse<T = any> {
+  status?: string;
   success: boolean;
+  message?: string;
   data: T;
   pagination?: PaginationMeta;
 }
@@ -53,4 +65,29 @@ export interface CreateConversationPayload {
   ride_id: number;
   driver_id: number;
   passenger_id: number;
+}
+
+// Action Response Types for Delete & Clear operations
+export interface ClearMessagesResponse {
+  status?: string;
+  success: boolean;
+  message: string;
+  deletedCount?: number;
+}
+
+export interface DeleteConversationResponse {
+  status?: string;
+  success: boolean;
+  message: string;
+  affectedRows?: number;
+}
+
+// Added type for deleting a single message
+export interface DeleteMessageResponse {
+  status?: string;
+  success: boolean;
+  message: string;
+  data?: {
+    messageId: number;
+  };
 }
