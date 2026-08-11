@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -19,13 +20,17 @@ import {
   ChevronRight,
   Loader2,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 
 import {
   getActivityLogs,
   ActivityLog,
   LogPagination,
+  clearAllActivityLogs,
 } from "@/services/activityLog.service";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function ActivityLogsPage() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
@@ -66,6 +71,22 @@ export default function ActivityLogsPage() {
     }
   }, [currentPage, searchQuery, entityFilter]);
 
+  // Handle Clear All Mutation
+  const clearMutation = useMutation({
+    mutationFn: clearAllActivityLogs,
+    onSuccess: (data) => {
+      toast.success(data.message || "All activity logs have been cleared.");
+      setSelectedLog(null); // Close inspector drawer if open
+      setCurrentPage(1);
+      fetchLogs(); // Re-fetch logs to update local state immediately
+    },
+    onError: (error: any) => {
+      toast.error(
+        error?.response?.data?.message || "Failed to clear activity logs"
+      );
+    },
+  });
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchLogs();
@@ -84,6 +105,20 @@ export default function ActivityLogsPage() {
     setCurrentPage(1);
   };
 
+  const handleClearLogs = () => {
+    toast.warning("Are you sure you want to clear all activity logs?", {
+      description: "This action is permanent and cannot be undone.",
+      action: {
+        label: "Clear All",
+        onClick: () => clearMutation.mutate(),
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => { },
+      },
+    });
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto min-h-screen">
       {/* Header */}
@@ -100,17 +135,33 @@ export default function ActivityLogsPage() {
           </p>
         </div>
 
-        <button
-          onClick={fetchLogs}
-          disabled={loading}
-          className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition disabled:opacity-50 self-start sm:self-auto"
-          title="Refresh Logs"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        </button>
+        {/* Global Action Bar */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={fetchLogs}
+            disabled={loading}
+            className="p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition disabled:opacity-50"
+            title="Refresh Logs"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
+
+          <button
+            onClick={handleClearLogs}
+            disabled={clearMutation.isPending || loading || logs.length === 0}
+            className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-rose-600/10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {clearMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            <span>{clearMutation.isPending ? "Clearing..." : "Clear All"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* Search & Entity Filters */}
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-white dark:bg-[#090C10] p-3 sm:p-4 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -130,11 +181,10 @@ export default function ActivityLogsPage() {
               <button
                 key={tab}
                 onClick={() => handleFilterChange(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
-                }`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all capitalize whitespace-nowrap ${isActive
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                  : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+                  }`}
               >
                 {tab}
               </button>
@@ -161,7 +211,7 @@ export default function ActivityLogsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <th className="px-6 py-4">Timestamp & ID</th>
                 <th className="px-6 py-4">Actor</th>
                 <th className="px-6 py-4">Action</th>
@@ -174,7 +224,10 @@ export default function ActivityLogsPage() {
             <tbody className="divide-y divide-gray-200 dark:divide-white/10 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                  >
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
                       <span>Fetching logs from server...</span>
@@ -186,7 +239,7 @@ export default function ActivityLogsPage() {
                   <tr
                     key={log.id}
                     onClick={() => setSelectedLog(log)}
-                    className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer"
+                    className="hover:bg-gray-50 dark:hover:bg-white/2 transition cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -255,7 +308,10 @@ export default function ActivityLogsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={7}
+                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                  >
                     No activity logs found.
                   </td>
                 </tr>
@@ -268,8 +324,15 @@ export default function ActivityLogsPage() {
         {pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-white/10 bg-gray-50/30 dark:bg-white/[0.01]">
             <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-              Page <span className="font-bold text-gray-900 dark:text-white">{pagination.page}</span> of{" "}
-              <span className="font-bold text-gray-900 dark:text-white">{pagination.totalPages}</span> ({pagination.total} total)
+              Page{" "}
+              <span className="font-bold text-gray-900 dark:text-white">
+                {pagination.page}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900 dark:text-white">
+                {pagination.totalPages}
+              </span>{" "}
+              ({pagination.total} total)
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -280,8 +343,14 @@ export default function ActivityLogsPage() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pagination.totalPages))}
-                disabled={currentPage === pagination.totalPages || loading}
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(prev + 1, pagination.totalPages)
+                  )
+                }
+                disabled={
+                  currentPage === pagination.totalPages || loading
+                }
                 className="p-2 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 disabled:opacity-40 hover:bg-gray-200 dark:hover:bg-white/10 transition"
               >
                 <ChevronRight className="w-4 h-4" />

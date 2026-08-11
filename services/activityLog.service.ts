@@ -31,6 +31,11 @@ export interface ApiResponse {
   pagination: LogPagination;
 }
 
+export interface ClearLogsResponse {
+  status: string;
+  message: string;
+}
+
 export interface ActivityLog {
   id: string;
   rawId: number;
@@ -132,4 +137,12 @@ export async function getActivityLogs(params: GetLogsParams = {}): Promise<{
   }));
 
   return { logs, pagination: result.pagination };
+}
+
+
+export async function clearAllActivityLogs(): Promise<ClearLogsResponse> {
+  const response = await apiClient.delete<ClearLogsResponse>(
+    "/admin/activity-logs/clear-all"
+  );
+  return response.data;
 }
