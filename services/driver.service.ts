@@ -3,6 +3,7 @@ import { apiClient } from "@/lib/api";
 import {
   ApiResponse,
   Driver,
+  DriverDetailDataBrief,
   DriverDetailsApiResponse,
   DriverStatus,
   GetPendingDriversParams,
@@ -10,7 +11,6 @@ import {
   UpdateDriverStatusRequest,
   VerifyDocumentRequest,
 } from "@/types/driver.types";
-
 
 export interface Pagination {
   total: number;
@@ -63,9 +63,19 @@ export function useDrivers(params: FetchDriversParams) {
 }
 
 export const DriverService = {
-  async getDriverById(driverId: number | string): Promise<DriverDetailsApiResponse> {
+  async getDriverById(
+    driverId: number | string,
+  ): Promise<DriverDetailsApiResponse> {
     const response = await apiClient.get<DriverDetailsApiResponse>(
-      `/admin/drivers/${driverId}`
+      `/admin/drivers/${driverId}`,
+    );
+    return response.data;
+  },
+  getDriverBrief: async (
+    driverId: number | string,
+  ): Promise<ApiResponse<DriverDetailDataBrief>> => {
+    const response = await apiClient.get<ApiResponse<DriverDetailDataBrief>>(
+      `/admin/drivers/${driverId}/brief`,
     );
     return response.data;
   },
@@ -113,7 +123,7 @@ export const DriverApproval = {
 
     return response.data;
   },
-  
+
   async verifyDocument({
     driverId,
     docType,

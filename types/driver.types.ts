@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type DriverStatus = "pending" |"active" | "inactive" | "blocked";
 
 export type DocumentType =
@@ -230,4 +231,53 @@ export interface DriverDetails {
 export interface DriverDetailsApiResponse {
   success: boolean;
   data: DriverDetails;
+}
+
+
+
+
+// ==========================================
+// TYPES & INTERFACES
+// ==========================================
+
+export interface DriverDocumentBriefing {
+  id: string | number;
+  type: 'dl' | 'aadhaar' | 'pan' | 'rc' | 'insurance' | string;
+  title: string;
+  file_url: string;
+  status: 'pending' | 'approved' | 'rejected' | string;
+  [key: string]: any; // Allows additional properties in the future
+}
+
+export interface BankDetails {
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  ifsc_code?: string;
+  [key: string]: any;
+}
+
+export interface AddressDetails2 {
+  current_address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  permanent_address?: string;
+  [key: string]: any;
+}
+
+export interface DriverDetailDataBrief {
+  id: number | string;
+  name: string;
+  email: string;
+  phone?: string;
+  created_at?: string;
+  status: 'active' | 'inactive' | 'pending' | 'blocked' | string;
+  total_vehicles?: number;
+  total_rides?: number;
+  total_earnings?: number;
+  address_details?: AddressDetails2 | null;
+  bank_details?: BankDetails | null;
+  documents?: DriverDocumentBriefing[];
+  [key: string]: any;
 }

@@ -409,8 +409,8 @@ export default function UserDetailsPage() {
             { id: 'overview', label: 'Overview' },
             { id: 'rides', label: 'Published Rides', hide: userData?.role?.toLowerCase() === 'passenger' },
             { id: 'bookings', label: 'Bookings', hide: userData?.role?.toLowerCase() === 'driver' },
-            { id: 'vehicles', label: 'Vehicles' },
-            { id: 'documents', label: `Documents (${userDocuments.length})` },
+            { id: 'vehicles', label: 'Vehicles', hide: userData?.role?.toLowerCase() === 'passenger' },
+            { id: 'documents', label: `Documents (${userDocuments.length})`, hide: userData?.role?.toLowerCase() === 'passenger' },
             { id: 'payments', label: 'Transactions & Payouts' },
           ]
             .filter((tab) => !tab.hide)

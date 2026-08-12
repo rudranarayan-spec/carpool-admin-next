@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useId, useEffect } from "react";
@@ -32,51 +33,52 @@ import {
 import { DriverRideItem, DriverStatus } from "@/types/driver.types";
 import { RideService } from "@/services/ride.service";
 import { useRouter } from "next/navigation";
+import { DriverService } from "@/services/driver.service";
 
-export interface DriverDocument {
-  id: string;
-  type: "aadhaar" | "pan" | "dl" | "rc" | "insurance" | "other";
+export interface DriverDocumentBriefing {
+  id: string | number;
+  type: "dl" | "aadhaar" | "pan" | "rc" | "insurance" | string;
   title: string;
-  document_number?: string;
   file_url: string;
-  status: "verified" | "pending" | "rejected";
+  status: "pending" | "approved" | "rejected" | string;
+  [key: string]: any;
 }
 
 export interface BankDetails {
-  account_name: string;
-  account_number: string;
-  bank_name: string;
-  ifsc_code: string;
-  upi_id?: string;
+  account_name?: string;
+  account_number?: string;
+  bank_name?: string;
+  ifsc_code?: string;
+  [key: string]: any;
 }
 
-export interface AddressDetails {
-  current_address: string;
+export interface AddressDetails2 {
+  current_address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
   permanent_address?: string;
-  city: string;
-  state: string;
-  pincode: string;
+  [key: string]: any;
 }
 
-export interface DriverDetailData {
-  id: string | number;
+export interface DriverDetailDataBrief {
+  id: number | string;
   name: string;
-  email?: string;
+  email: string;
   phone?: string;
   created_at?: string;
-  status: DriverStatus;
+  status: "active" | "inactive" | "pending" | "blocked" | string;
   total_vehicles?: number;
   total_rides?: number;
   total_earnings?: number;
-  rating?: number;
-  documents?: DriverDocument[];
-  bank_details?: BankDetails;
-  address_details?: AddressDetails;
-  recent_rides?: DriverRideItem[];
+  address_details?: AddressDetails2 | null;
+  bank_details?: BankDetails | null;
+  documents?: DriverDocumentBriefing[];
+  [key: string]: any;
 }
 
 interface DriverDetailsDrawerProps {
-  driver: DriverDetailData | null;
+  driver: DriverDetailDataBrief | null;
   isOpen: boolean;
   onClose: () => void;
   onStatusChange: (driverId: string | number, newStatus: DriverStatus) => void;
@@ -103,10 +105,36 @@ export function DriverDetailsDrawer({
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const tabLayoutId = useId();
 
-  const router = useRouter()
-
+  const router = useRouter();
   const driverId = driver?.id;
 
+  // 1. Fetch Brief Details API when Drawer Opens
+  const {
+    data: briefData, // Now strictly typed as DriverDetailDataBrief | undefined
+    isLoading: isLoadingBrief,
+    isError: isBriefError,
+    error: briefError,
+  } = useQuery({
+    queryKey: ["driver-brief", driverId],
+    queryFn: () => DriverService.getDriverBrief(driverId!),
+    select: (res) => res.data,
+    enabled: isOpen && !!driverId,
+    staleTime: 1000 * 60 * 5,
+  });
+  
+  console.log(briefData);
+  
+
+  // 2. Safe assignment with full autocomplete and no type errors
+  const activeDriver: DriverDetailDataBrief = {
+    ...driver!,
+    ...briefData,
+    documents: briefData?.documents ?? driver?.documents,
+    bank_details: briefData?.bank_details ?? driver?.bank_details,
+    address_details: briefData?.address_details ?? driver?.address_details,
+  };
+
+  // 2. Fetch Driver Rides (Kept same)
   const {
     data: fetchedRides,
     isLoading: isLoadingRides,
@@ -119,6 +147,7 @@ export function DriverDetailsDrawer({
     staleTime: 1000 * 60 * 3,
   });
 
+  // Handle Error Toasts
   useEffect(() => {
     if (isRidesError && ridesError) {
       toast.error(
@@ -127,7 +156,16 @@ export function DriverDetailsDrawer({
     }
   }, [isRidesError, ridesError]);
 
+  useEffect(() => {
+    if (isBriefError && briefError) {
+      toast.error(
+        (briefError as Error)?.message || "Failed to fetch driver brief details"
+      );
+    }
+  }, [isBriefError, briefError]);
+
   const handleCopy = (text: string, fieldName: string) => {
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedField(fieldName);
     toast.success(`${fieldName} copied to clipboard`);
@@ -136,10 +174,11 @@ export function DriverDetailsDrawer({
 
   if (!driver) return null;
 
-  const ridesToDisplay = fetchedRides ?? driver.recent_rides ?? [];
+  const ridesToDisplay = fetchedRides ?? activeDriver.recent_rides ?? [];
 
-  const maskAccountNumber = (accNum: string) => {
-    if (!accNum || accNum.length < 4) return accNum;
+  const maskAccountNumber = (accNum?: string) => {
+    if (!accNum) return "N/A";
+    if (accNum.length < 4) return accNum;
     return `•••• •••• ${accNum.slice(-4)}`;
   };
 
@@ -177,13 +216,13 @@ export function DriverDetailsDrawer({
                   <div className="flex items-center gap-2">
                     <h2
                       onClick={() => {
-                        onClose(); 
-                        router.push(`/users/${driver.id}`);
+                        onClose();
+                        router.push(`/users/${activeDriver.id}`);
                       }}
                       className="text-xl font-black tracking-tight capitalize text-slate-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1.5 group"
                       title="View full user profile"
                     >
-                      {driver.name}
+                      {activeDriver.name}
                       <ExternalLink className="w-4 h-4 transition-opacity" />
                     </h2>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
@@ -191,7 +230,7 @@ export function DriverDetailsDrawer({
                     </span>
                   </div>
                   <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
-                    ID: #{driver.id}
+                    ID: #{activeDriver.id}
                   </p>
                 </div>
                 <button
@@ -220,11 +259,17 @@ export function DriverDetailsDrawer({
                         <motion.div
                           layoutId={`active-tab-${tabLayoutId}`}
                           className="absolute inset-0 bg-white dark:bg-[#121824] rounded-xl shadow-sm border border-slate-200/80 dark:border-white/10"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30,
+                          }}
                         />
                       )}
                       <Icon className="w-3.5 h-3.5 relative z-10" />
-                      <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+                      <span className="relative z-10 hidden sm:inline">
+                        {tab.label}
+                      </span>
                     </button>
                   );
                 })}
@@ -250,7 +295,9 @@ export function DriverDetailsDrawer({
                             <IndianRupee className="w-3 h-3" /> Earned
                           </p>
                           <p className="text-base font-black text-slate-900 dark:text-white truncate">
-                            ${(driver.total_earnings || 0).toLocaleString("en-IN")}
+                            ₹{(activeDriver.total_earnings || 0).toLocaleString(
+                              "en-IN"
+                            )}
                           </p>
                         </div>
 
@@ -259,16 +306,16 @@ export function DriverDetailsDrawer({
                             <Users className="w-3 h-3" /> Rides
                           </p>
                           <p className="text-base font-black text-slate-900 dark:text-white">
-                            {driver.total_rides || ridesToDisplay.length || 0}
+                            {activeDriver.total_rides || ridesToDisplay.length || 0}
                           </p>
                         </div>
 
-                        <div className="p-3.5 rounded-2xl bg-linear-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/20">
                           <p className="text-[10px] uppercase tracking-wider font-extrabold text-purple-600 dark:text-purple-400 flex items-center gap-1 mb-1">
                             <Car className="w-3 h-3" /> Vehicles
                           </p>
                           <p className="text-base font-black text-slate-900 dark:text-white">
-                            {driver.total_vehicles || 0}
+                            {activeDriver.total_vehicles || 0}
                           </p>
                         </div>
                       </div>
@@ -279,14 +326,16 @@ export function DriverDetailsDrawer({
                           Contact Details
                         </h3>
                         <div className="space-y-2">
-                          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5">
+                          <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5">
                             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-500">
                               <Mail className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className="text-[10px] text-slate-400 font-medium">Email</p>
+                              <p className="text-[10px] text-slate-400 font-medium">
+                                Email
+                              </p>
                               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-                                {driver.email || "N/A"}
+                                {activeDriver.email || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -296,9 +345,11 @@ export function DriverDetailsDrawer({
                               <Phone className="w-4 h-4" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-[10px] text-slate-400 font-medium">Phone</p>
+                              <p className="text-[10px] text-slate-400 font-medium">
+                                Phone
+                              </p>
                               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                {driver.phone || "N/A"}
+                                {activeDriver.phone || "N/A"}
                               </p>
                             </div>
                           </div>
@@ -308,10 +359,14 @@ export function DriverDetailsDrawer({
                               <Calendar className="w-4 h-4" />
                             </div>
                             <div className="flex-1">
-                              <p className="text-[10px] text-slate-400 font-medium">Joined Date</p>
+                              <p className="text-[10px] text-slate-400 font-medium">
+                                Joined Date
+                              </p>
                               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                                {driver.created_at
-                                  ? new Date(driver.created_at).toLocaleDateString("en-GB", {
+                                {activeDriver.created_at
+                                  ? new Date(
+                                    activeDriver.created_at
+                                  ).toLocaleDateString("en-GB", {
                                     day: "2-digit",
                                     month: "short",
                                     year: "numeric",
@@ -337,35 +392,41 @@ export function DriverDetailsDrawer({
                         {isLoadingRides ? (
                           <div className="p-8 flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-slate-200/60 dark:border-white/5 text-slate-400">
                             <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                            <span className="text-xs font-medium">Fetching rides...</span>
+                            <span className="text-xs font-medium">
+                              Fetching rides...
+                            </span>
                           </div>
                         ) : ridesToDisplay.length > 0 ? (
                           <div className="space-y-2.5">
-                            {ridesToDisplay.map((ride) => (
+                            {ridesToDisplay.map((ride: any) => (
                               <div
                                 key={ride.id}
                                 onClick={() => {
                                   onClose();
                                   router.push(`/rides/${ride.id}`);
                                 }}
-                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/2 border border-slate-200/60 dark:border-white/5 space-y-2 cursor-pointer"
+                                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-2 cursor-pointer hover:border-slate-300 dark:hover:border-white/20 transition-all"
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-mono font-bold text-slate-500">
                                     #{ride.id}
                                   </span>
                                   <span className="text-xs font-black text-emerald-500">
-                                    ${ride.price_per_seat}
+                                    ₹{ride.price_per_seat}
                                   </span>
                                 </div>
                                 <div className="space-y-1.5 text-xs">
                                   <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                                     <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                    <span className="truncate">{ride.source_address}</span>
+                                    <span className="truncate">
+                                      {ride.source_address}
+                                    </span>
                                   </div>
                                   <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                                     <MapPinOff className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                                    <span className="truncate">{ride.destination_address}</span>
+                                    <span className="truncate">
+                                      {ride.destination_address}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
@@ -386,49 +447,67 @@ export function DriverDetailsDrawer({
                       <h3 className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
                         Submitted Verification Documents
                       </h3>
-                      {driver.documents && driver.documents.length > 0 ? (
-                        driver.documents.map((doc) => (
-                          <div
-                            key={doc.id}
-                            className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-3"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2.5">
-                                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
-                                  <ShieldCheck className="w-4 h-4" />
+
+                      {isLoadingBrief ? (
+                        <div className="p-8 flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-slate-200/60 dark:border-white/5 text-slate-400">
+                          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                          <span className="text-xs font-medium">
+                            Fetching driver documents...
+                          </span>
+                        </div>
+                      ) : activeDriver.documents &&
+                        activeDriver.documents.length > 0 ? (
+                        activeDriver.documents.map((doc, index) => {
+                          const docTitle =
+                            doc.title || doc.type || `Document #${index + 1}`;
+                          const docFileUrl = doc.file_url;
+                          const docStatus = doc.status || "pending";
+
+                          return (
+                            <div
+                              key={doc.id || index}
+                              className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-3"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+                                    <ShieldCheck className="w-4 h-4" />
+                                  </div>
+                                  <span className="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                                    {docTitle}
+                                  </span>
                                 </div>
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">
-                                  {doc.title}
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${docStatus === "approved" ||
+                                      docStatus === "verified"
+                                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                                      : docStatus === "rejected"
+                                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                    }`}
+                                >
+                                  {docStatus}
                                 </span>
                               </div>
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize ${doc.status === "verified"
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                                  : doc.status === "rejected"
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
-                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                                  }`}
-                              >
-                                {doc.status}
-                              </span>
+
+                              {docFileUrl ? (
+                                <a
+                                  href={docFileUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors"
+                                >
+                                  View Document{" "}
+                                  <ExternalLink className="w-3.5 h-3.5" />
+                                </a>
+                              ) : (
+                                <p className="text-[11px] text-slate-400 italic">
+                                  No file attachment provided
+                                </p>
+                              )}
                             </div>
-
-                            {doc.document_number && (
-                              <p className="text-xs font-mono text-slate-500">
-                                ID Number: {doc.document_number}
-                              </p>
-                            )}
-
-                            <a
-                              href={doc.file_url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors"
-                            >
-                              View Document <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-dashed border-slate-200 dark:border-white/10 text-xs text-slate-400">
                           No verification documents available
@@ -443,69 +522,90 @@ export function DriverDetailsDrawer({
                       <h3 className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
                         Payout Account Info
                       </h3>
-                      {driver.bank_details ? (
+
+                      {isLoadingBrief ? (
+                        <div className="p-8 flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-slate-200/60 dark:border-white/5 text-slate-400">
+                          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                          <span className="text-xs font-medium">
+                            Fetching bank details...
+                          </span>
+                        </div>
+                      ) : activeDriver.bank_details ? (
                         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-3.5 text-xs">
                           <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/40 dark:border-white/5">
                             <span className="text-slate-400">Bank Name</span>
                             <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                               <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                              {driver.bank_details.bank_name}
+                              {activeDriver.bank_details.bank_name || "N/A"}
                             </span>
                           </div>
+
                           <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/40 dark:border-white/5">
-                            <span className="text-slate-400">Account Holder</span>
+                            <span className="text-slate-400">
+                              Account Holder
+                            </span>
                             <span className="font-bold text-slate-800 dark:text-slate-200">
-                              {driver.bank_details.account_name}
+                              {activeDriver.bank_details.account_name || "N/A"}
                             </span>
                           </div>
+
                           <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/40 dark:border-white/5">
-                            <span className="text-slate-400">Account Number</span>
+                            <span className="text-slate-400">
+                              Account Number
+                            </span>
                             <div className="flex items-center gap-2">
                               <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                                {maskAccountNumber(driver.bank_details.account_number)}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleCopy(driver.bank_details!.account_number, "Account Number")
-                                }
-                                className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded transition-colors"
-                                title="Copy Account Number"
-                              >
-                                {copiedField === "Account Number" ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                {maskAccountNumber(
+                                  activeDriver.bank_details.account_number
                                 )}
-                              </button>
+                              </span>
+                              {activeDriver.bank_details.account_number && (
+                                <button
+                                  onClick={() =>
+                                    handleCopy(
+                                      activeDriver.bank_details!.account_number!,
+                                      "Account Number"
+                                    )
+                                  }
+                                  className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded transition-colors"
+                                  title="Copy Account Number"
+                                >
+                                  {copiedField === "Account Number" ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
+
                           <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/40 dark:border-white/5">
                             <span className="text-slate-400">IFSC Code</span>
                             <div className="flex items-center gap-2">
                               <span className="font-mono font-bold text-slate-800 dark:text-slate-200">
-                                {driver.bank_details.ifsc_code}
+                                {activeDriver.bank_details.ifsc_code || "N/A"}
                               </span>
-                              <button
-                                onClick={() => handleCopy(driver.bank_details!.ifsc_code, "IFSC Code")}
-                                className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded transition-colors"
-                                title="Copy IFSC Code"
-                              >
-                                {copiedField === "IFSC Code" ? (
-                                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5 text-slate-400" />
-                                )}
-                              </button>
+                              {activeDriver.bank_details.ifsc_code && (
+                                <button
+                                  onClick={() =>
+                                    handleCopy(
+                                      activeDriver.bank_details!.ifsc_code!,
+                                      "IFSC Code"
+                                    )
+                                  }
+                                  className="p-1 hover:bg-slate-200 dark:hover:bg-white/10 rounded transition-colors"
+                                  title="Copy IFSC Code"
+                                >
+                                  {copiedField === "IFSC Code" ? (
+                                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                                  ) : (
+                                    <Copy className="w-3.5 h-3.5 text-slate-400" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                           </div>
-                          {driver.bank_details.upi_id && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-slate-400">UPI ID</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-200">
-                                {driver.bank_details.upi_id}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <div className="p-6 text-center rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-dashed border-slate-200 dark:border-white/10 text-xs text-slate-400">
@@ -521,28 +621,43 @@ export function DriverDetailsDrawer({
                       <h3 className="text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
                         Address Verification
                       </h3>
-                      {driver.address_details ? (
+
+                      {isLoadingBrief ? (
+                        <div className="p-8 flex flex-col items-center justify-center gap-2 rounded-2xl bg-slate-50 dark:bg-white/[0.01] border border-slate-200/60 dark:border-white/5 text-slate-400">
+                          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                          <span className="text-xs font-medium">
+                            Fetching address details...
+                          </span>
+                        </div>
+                      ) : activeDriver.address_details ? (
                         <div className="space-y-3 text-xs">
                           <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-1">
                             <p className="text-[10px] font-extrabold uppercase text-slate-400">
                               Current Address
                             </p>
                             <p className="text-slate-800 dark:text-slate-200 font-semibold leading-relaxed">
-                              {driver.address_details.current_address}
+                              {activeDriver.address_details.current_address ||
+                                "N/A"}
                             </p>
                             <p className="text-slate-500 pt-1">
-                              {driver.address_details.city}, {driver.address_details.state} -{" "}
-                              {driver.address_details.pincode}
+                              {[
+                                activeDriver.address_details.city,
+                                activeDriver.address_details.state,
+                              ]
+                                .filter(Boolean)
+                                .join(", ")}
+                              {activeDriver.address_details.pincode &&
+                                ` - ${activeDriver.address_details.pincode}`}
                             </p>
                           </div>
 
-                          {driver.address_details.permanent_address && (
+                          {activeDriver.address_details.permanent_address && (
                             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 space-y-1">
                               <p className="text-[10px] font-extrabold uppercase text-slate-400">
                                 Permanent Address
                               </p>
                               <p className="text-slate-800 dark:text-slate-200 font-semibold leading-relaxed">
-                                {driver.address_details.permanent_address}
+                                {activeDriver.address_details.permanent_address}
                               </p>
                             </div>
                           )}
@@ -565,32 +680,48 @@ export function DriverDetailsDrawer({
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
-                  disabled={driver.status === "active" || isUpdatingStatus}
-                  onClick={() => onStatusChange(driver.id, "active")}
+                  disabled={
+                    activeDriver.status === "active" || isUpdatingStatus
+                  }
+                  onClick={() =>
+                    onStatusChange(activeDriver.id, "active" as DriverStatus)
+                  }
                   className="px-3 py-2.5 rounded-xl text-xs font-bold transition-all border bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" /> Active
                 </button>
 
                 <button
-                  disabled={driver.status === "inactive" || isUpdatingStatus}
-                  onClick={() => onStatusChange(driver.id, "inactive")}
+                  disabled={
+                    activeDriver.status === "inactive" || isUpdatingStatus
+                  }
+                  onClick={() =>
+                    onStatusChange(activeDriver.id, "inactive" as DriverStatus)
+                  }
                   className="px-3 py-2.5 rounded-xl text-xs font-bold transition-all border bg-slate-500/10 hover:bg-slate-500/20 text-slate-600 dark:text-slate-300 border-slate-500/20 disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <XCircle className="w-3.5 h-3.5" /> Deactivate
                 </button>
 
                 <button
-                  disabled={driver.status === "pending" || isUpdatingStatus}
-                  onClick={() => onStatusChange(driver.id, "pending")}
+                  disabled={
+                    activeDriver.status === "pending" || isUpdatingStatus
+                  }
+                  onClick={() =>
+                    onStatusChange(activeDriver.id, "pending" as DriverStatus)
+                  }
                   className="px-3 py-2.5 rounded-xl text-xs font-bold transition-all border bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20 disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <Clock className="w-3.5 h-3.5" /> Pending
                 </button>
 
                 <button
-                  disabled={driver.status === "blocked" || isUpdatingStatus}
-                  onClick={() => onStatusChange(driver.id, "blocked")}
+                  disabled={
+                    activeDriver.status === "blocked" || isUpdatingStatus
+                  }
+                  onClick={() =>
+                    onStatusChange(activeDriver.id, "blocked" as DriverStatus)
+                  }
                   className="px-3 py-2.5 rounded-xl text-xs font-bold transition-all border bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/20 disabled:opacity-40 flex items-center justify-center gap-1.5 active:scale-95"
                 >
                   <Ban className="w-3.5 h-3.5" /> Reject
