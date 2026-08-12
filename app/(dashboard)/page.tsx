@@ -33,6 +33,7 @@ import { dashboardService } from "@/services/dashboard.service";
 import { RecentActivity } from "@/types/dashboard.types";
 import { DriverApproval } from "@/services/driver.service";
 import { Driver, DriverDocument } from "@/types/driver.types";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 // Helper function to format ISO timestamps into relative time (e.g. "2m ago")
 function formatRelativeTime(isoString: string): string {
@@ -204,6 +205,18 @@ export default function DashboardPage() {
       },
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-slate-50 dark:bg-[#090C10] max-w-[1600px] mx-auto flex items-center justify-center">
+        <LoadingSpinner 
+          message="Compiling Platform Analytics" 
+          subtext="Fetching telemetry metrics, ride conversions, and revenue insights..." 
+          variant="page"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-4 space-y-8 max-w-[1600px] mx-auto text-slate-900 dark:text-slate-100">

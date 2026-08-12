@@ -36,6 +36,7 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<"24h" | "7d" | "30d" | "90d">("7d");
@@ -68,10 +69,22 @@ export default function AnalyticsPage() {
     select: (res) => res.data, // Extract GrowthAndCorridorsData directly
   });
 
+  if (isLoading || isGrowthLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 min-h-screen bg-slate-50 dark:bg-[#090C10] max-w-[1600px] mx-auto flex items-center justify-center">
+        <LoadingSpinner
+          message="Compiling Platform Analytics"
+          subtext="Fetching telemetry metrics, ride conversions, and revenue insights..."
+          variant="page"
+        />
+      </div>
+    );
+  }
+
   const userAcquisition = growthData?.user_acquisition;
   const topCorridors = growthData?.top_corridors;
 
-  if (isError) {
+  if (isError || isGrowthError) {
     return (
       <div className="p-8 min-h-screen flex flex-col items-center justify-center text-center space-y-4">
         <div className="p-3 rounded-full bg-rose-500/10 text-rose-500">
@@ -569,8 +582,8 @@ export default function AnalyticsPage() {
                     <p className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">{r.fare}</p>
                     <p
                       className={`text-[10px] font-bold ${r.growth.startsWith("+")
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-rose-600 dark:text-rose-400"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-rose-600 dark:text-rose-400"
                         }`}
                     >
                       {r.growth} vs prev
