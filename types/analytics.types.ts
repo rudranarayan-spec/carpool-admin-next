@@ -108,3 +108,34 @@ export interface AnalyticsApiResponse<T> {
   message: string;
   data: T;
 }
+
+
+export interface UserAcquisitionSegment {
+  count: string;
+  percentage: number;
+  label: string;
+}
+
+export interface UserAcquisitionData {
+  total_new: string;
+  riders: UserAcquisitionSegment;
+  drivers: UserAcquisitionSegment;
+  ai_insight: string;
+}
+
+export interface CorridorRoute {
+  route: string;
+  volume: string;
+  fare: string;
+  growth: string;
+}
+
+export interface GrowthAndCorridorsData {
+  user_acquisition: UserAcquisitionData;
+  top_corridors: CorridorRoute[];
+}
+
+export interface GrowthAndCorridorsResponse {
+  success: boolean;
+  data: GrowthAndCorridorsData;
+}

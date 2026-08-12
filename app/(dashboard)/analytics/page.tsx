@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/immutability */
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { analyticsService } from "@/services/analytics.service";
 import {
   AnalyticsQueryParams,
-  PlatformPerformanceData,
 } from "@/types/analytics.types";
 import {
   Users,
@@ -24,6 +24,7 @@ import {
   Sparkles,
   AlertCircle,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import {
   BarChart,
@@ -33,6 +34,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  CartesianGrid,
 } from "recharts";
 
 export default function AnalyticsPage() {
@@ -54,6 +56,20 @@ export default function AnalyticsPage() {
     staleTime: 1000 * 60 * 5, // 5 minutes
     select: (res) => res.data, // Extract data payload directly
   });
+
+  const {
+    data: growthData,
+    isLoading: isGrowthLoading,
+    isError: isGrowthError,
+  } = useQuery({
+    queryKey: ["dashboard-growth"],
+    queryFn: () => analyticsService.getDashboardGrowth(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    select: (res) => res.data, // Extract GrowthAndCorridorsData directly
+  });
+
+  const userAcquisition = growthData?.user_acquisition;
+  const topCorridors = growthData?.top_corridors;
 
   if (isError) {
     return (
@@ -104,7 +120,7 @@ export default function AnalyticsPage() {
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Comparison Mode Toggle */}
-          <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 text-xs font-bold backdrop-blur-md">
+          {/* <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 text-xs font-bold backdrop-blur-md">
             <button
               onClick={() => setCompareMode("vs_previous")}
               className={`px-3 py-1.5 rounded-lg transition-all ${compareMode === "vs_previous"
@@ -123,10 +139,10 @@ export default function AnalyticsPage() {
             >
               vs Prior Year
             </button>
-          </div>
+          </div> */}
 
           {/* Time Filter Pills */}
-          <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 backdrop-blur-md">
+          {/* <div className="flex bg-slate-200/70 dark:bg-white/5 p-1 rounded-xl border border-slate-300/60 dark:border-white/10 backdrop-blur-md">
             {(["24h", "7d", "30d", "90d"] as const).map((range) => (
               <button
                 key={range}
@@ -139,7 +155,7 @@ export default function AnalyticsPage() {
                 {range}
               </button>
             ))}
-          </div>
+          </div> */}
 
           {/* Export Button */}
           <button className="px-3.5 py-2 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-white/10 shadow-sm backdrop-blur-md transition flex items-center gap-2 text-xs font-bold">
@@ -232,7 +248,7 @@ export default function AnalyticsPage() {
                 +{kpis?.active_platform_users.percentage_change}%
               </span>
               <span className="text-[10px] font-semibold text-slate-400 dark:text-gray-500">
-                {kpis?.active_platform_users.breakdown.riders} Riders • {kpis?.active_platform_users.breakdown.drivers} Drivers
+                {kpis?.active_platform_users.breakdown.riders} Passengers • {kpis?.active_platform_users.breakdown.drivers} Drivers
               </span>
             </div>
           </div>
@@ -273,6 +289,7 @@ export default function AnalyticsPage() {
 
         {/* Interactive Bar Chart Section */}
         <div className="lg:col-span-2 p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-6">
+          {/* Header Section */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -283,14 +300,41 @@ export default function AnalyticsPage() {
                 {bookingVelocity?.description}
               </p>
             </div>
+
+            {/* Improved 7-Day Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-inner w-fit">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              <Calendar className="w-3.5 h-3.5 text-blue-500" />
+              <span>Last 7 Days</span>
+            </div>
           </div>
 
           {/* Recharts Bar Chart Container */}
           <div className="h-72 w-full pt-4">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={bookingVelocity?.chart_data || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} fontWeight={600} />
-                <YAxis stroke="#64748B" fontSize={11} tickLine={false} axisLine={false} fontWeight={600} />
+              <BarChart
+                data={bookingVelocity?.chart_data || []}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+                <XAxis
+                  dataKey="day"
+                  stroke="#64748B"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  fontWeight={600}
+                />
+                <YAxis
+                  stroke="#64748B"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  fontWeight={600}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "rgba(15, 23, 42, 0.95)",
@@ -298,25 +342,41 @@ export default function AnalyticsPage() {
                     borderRadius: "14px",
                     color: "#fff",
                     fontSize: "12px",
-                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)"
+                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
                   }}
                 />
                 <Legend
                   wrapperStyle={{ paddingTop: "15px", fontSize: "12px", fontWeight: "600" }}
                 />
-                <Bar dataKey="rides_published" name="Rides Published" fill="#3B82F6" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="rides_booked" name="Rides Booked" fill="#10B981" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="prior_period_target" name="Prior Period Target" fill="#94A3B8" radius={[6, 6, 0, 0]} />
+                <Bar
+                  dataKey="rides_published"
+                  name="Rides Published"
+                  fill="#3B82F6"
+                  radius={[6, 6, 0, 0]}
+                />
+                <Bar
+                  dataKey="rides_booked"
+                  name="Rides Booked"
+                  fill="#10B981"
+                  radius={[6, 6, 0, 0]}
+                />
+                <Bar
+                  dataKey="prior_period_target"
+                  name="Prior Period Target"
+                  fill="#94A3B8"
+                  radius={[6, 6, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
+          {/* Footer Stats */}
           <div className="pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs font-semibold text-slate-500 dark:text-gray-400 border-t border-slate-200/80 dark:border-white/10 gap-2">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-slate-400 rounded-full" />
               Prior period baseline included for velocity calculation
             </span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
+            <span className="text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
               Average Fill Yield: {bookingVelocity?.average_fill_yield}%
             </span>
           </div>
@@ -324,36 +384,75 @@ export default function AnalyticsPage() {
 
         {/* Capacity Breakdown Donut Chart */}
         <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md flex flex-col justify-between space-y-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <PieChartIcon className="w-5 h-5 text-violet-500" />
-              {capacityBreakdown?.title || "Ride Capacity Breakdown"}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
-              {capacityBreakdown?.description}
-            </p>
+          {/* Header Section with Side-by-Side Badge */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <PieChartIcon className="w-5 h-5 text-violet-500" />
+                {capacityBreakdown?.title || "Ride Capacity Breakdown"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-gray-400 font-medium mt-0.5">
+                {capacityBreakdown?.description}
+              </p>
+            </div>
+
+            {/* Modern Last 7 Days Pill Badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-inner w-fit">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+              </span>
+              <Calendar className="w-3.5 h-3.5 text-violet-500" />
+              <span>Last 7 Days</span>
+            </div>
           </div>
 
-          {/* Styled CSS Conic Donut Graphic */}
+          {/* Dynamic Conic Donut Graphic */}
           <div className="flex items-center justify-center my-2">
-            <div className="relative w-44 h-44 rounded-full bg-[conic-gradient(#3b82f6_0deg_180deg,#10b981_180deg_270deg,#f59e0b_270deg_330deg,#ef4444_330deg_360deg)] flex items-center justify-center p-4 shadow-xl hover:scale-105 transition-transform">
-              <div className="w-32 h-32 rounded-full bg-white dark:bg-[#090C10] flex flex-col items-center justify-center text-center shadow-inner">
-                <span className="text-2xl font-black text-slate-900 dark:text-white">
-                  {capacityBreakdown?.formatted_total_rides}
-                </span>
-                <span className="text-[10px] text-slate-400 dark:text-gray-400 uppercase tracking-widest font-bold">
-                  Total Rides
-                </span>
-              </div>
-            </div>
+            {(() => {
+              // Calculate dynamic degree stops from backend segments
+              let cumulativeDeg = 0;
+              const gradientStops = capacityBreakdown?.segments?.map((segment) => {
+                const startDeg = cumulativeDeg;
+                const degSpan = (segment.percentage / 100) * 360;
+                cumulativeDeg += degSpan;
+                return `${segment.color} ${startDeg.toFixed(1)}deg ${cumulativeDeg.toFixed(1)}deg`;
+              }).join(", ");
+
+              const backgroundStyle = gradientStops
+                ? `conic-gradient(${gradientStops})`
+                : `conic-gradient(#3b82f6 0deg 180deg, #10b981 180deg 270deg, #f59e0b 270deg 330deg, #ef4444 330deg 360deg)`;
+
+              return (
+                <div
+                  className="relative w-44 h-44 rounded-full flex items-center justify-center p-4 shadow-xl hover:scale-105 transition-transform duration-300"
+                  style={{ background: backgroundStyle }}
+                >
+                  <div className="w-32 h-32 rounded-full bg-white dark:bg-[#090C10] flex flex-col items-center justify-center text-center shadow-inner">
+                    <span className="text-2xl font-black text-slate-900 dark:text-white">
+                      {capacityBreakdown?.formatted_total_rides || "0"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-gray-400 uppercase tracking-widest font-bold">
+                      Total Rides
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Dynamic Donut Legend Breakdown */}
           <div className="space-y-2 text-xs font-bold">
-            {capacityBreakdown?.segments.map((segment) => (
-              <div key={segment.key} className="flex items-center justify-between p-2 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5">
+            {capacityBreakdown?.segments?.map((segment) => (
+              <div
+                key={segment.key}
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 transition-colors"
+              >
                 <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                  <span
+                    className="w-3 h-3 rounded-full shadow-sm"
+                    style={{ backgroundColor: segment.color }}
+                  />
                   <span className="text-slate-700 dark:text-gray-200">{segment.label}</span>
                 </div>
                 <span className="font-mono text-slate-900 dark:text-gray-300">
@@ -369,7 +468,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* User Acquisition Split Card */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-6">
+        <div className="p-5 sm:p-6 rounded-2xl bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -381,41 +480,60 @@ export default function AnalyticsPage() {
               </p>
             </div>
             <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100/80 dark:bg-emerald-500/10 dark:text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-500/20">
-              +1,420 New
+              {isGrowthLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : `${userAcquisition?.total_new ?? 0} New`}
             </span>
           </div>
 
           <div className="space-y-4">
+            {/* Passenger Onboarding Bar */}
             <div>
               <div className="flex justify-between text-xs font-bold mb-1.5">
-                <span className="text-slate-700 dark:text-gray-300">Passenger Onboarding</span>
-                <span className="text-indigo-600 dark:text-indigo-400 font-mono">1,120 riders (+12.4%)</span>
+                <span className="text-slate-700 dark:text-gray-300">
+                  {userAcquisition?.riders.label || "Passenger Onboarding"}
+                </span>
+                <span className="text-indigo-600 dark:text-indigo-400 font-mono">
+                  {userAcquisition?.riders.count} Passengers ({userAcquisition?.riders.percentage}%)
+                </span>
               </div>
               <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-2.5 overflow-hidden">
-                <div className="bg-indigo-500 h-full rounded-full w-[78%]" />
+                <div
+                  className="bg-indigo-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${userAcquisition?.riders.percentage ?? 0}%` }}
+                />
               </div>
             </div>
 
+            {/* Driver Applications Bar */}
             <div>
               <div className="flex justify-between text-xs font-bold mb-1.5">
-                <span className="text-slate-700 dark:text-gray-300">Verified Driver Applications</span>
-                <span className="text-cyan-600 dark:text-cyan-400 font-mono">300 drivers (+4.1%)</span>
+                <span className="text-slate-700 dark:text-gray-300">
+                  {userAcquisition?.drivers.label || "Verified Driver Applications"}
+                </span>
+                <span className="text-cyan-600 dark:text-cyan-400 font-mono">
+                  {userAcquisition?.drivers.count} Drivers ({userAcquisition?.drivers.percentage}%)
+                </span>
               </div>
               <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-2.5 overflow-hidden">
-                <div className="bg-cyan-500 h-full rounded-full w-[22%]" />
+                <div
+                  className="bg-cyan-500 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${userAcquisition?.drivers.percentage ?? 0}%` }}
+                />
               </div>
             </div>
           </div>
 
-          {/* AI Insight Callout Box */}
+          {/* Dynamic AI Insight Callout Box */}
           <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3 text-xs text-indigo-900 dark:text-indigo-300 font-medium">
             <Lightbulb className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
             <div>
-              <strong>Supply Shift Detected:</strong> Driver registration grew by 4.1% while Passenger demand spiked by 12.4%. Consider launching a driver recruitment referral campaign to maintain balance.
+              {isGrowthLoading ? (
+                <span>Analyzing onboarding trends...</span>
+              ) : (
+                userAcquisition?.ai_insight
+              )}
             </div>
           </div>
         </div>
-
         {/* Top Routes & Corridors */}
         <div className="p-5 sm:p-6 rounded-2xl bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] border border-slate-200/80 dark:border-white/10 shadow-sm backdrop-blur-md space-y-5">
           <div className="flex items-center justify-between">
@@ -432,25 +550,39 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="space-y-2.5">
-            {[
-              { route: "Tech Corridor ➔ Airport Express", volume: "4,120 trips", fare: "$28.50", growth: "+15%" },
-              { route: "Suburban West ➔ Financial District", volume: "3,280 trips", fare: "$19.20", growth: "+8%" },
-              { route: "University Campus ➔ Metro Hub", volume: "2,840 trips", fare: "$12.00", growth: "+22%" },
-              { route: "South Bay ➔ Innovation Park", volume: "2,100 trips", fare: "$24.00", growth: "-2%" },
-            ].map((r, i) => (
-              <div key={i} className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs hover:border-blue-500/40 transition">
-                <div className="space-y-0.5">
-                  <p className="font-bold text-slate-900 dark:text-white">{r.route}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-gray-400 font-medium">{r.volume}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">{r.fare}</p>
-                  <p className={`text-[10px] font-bold ${r.growth.startsWith("+") ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                    {r.growth} vs prev
-                  </p>
-                </div>
+            {isGrowthLoading ? (
+              <div className="p-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                Loading corridor insights...
               </div>
-            ))}
+            ) : topCorridors && topCorridors.length > 0 ? (
+              topCorridors.map((r, i) => (
+                <div
+                  key={i}
+                  className="p-3.5 rounded-xl bg-slate-100/70 dark:bg-white/5 border border-slate-200/60 dark:border-white/5 flex items-center justify-between text-xs hover:border-blue-500/40 transition"
+                >
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-slate-900 dark:text-white">{r.route}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-gray-400 font-medium">{r.volume}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">{r.fare}</p>
+                    <p
+                      className={`text-[10px] font-bold ${r.growth.startsWith("+")
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-rose-600 dark:text-rose-400"
+                        }`}
+                    >
+                      {r.growth} vs prev
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center text-xs text-slate-400">
+                No corridor data available.
+              </div>
+            )}
           </div>
         </div>
 
