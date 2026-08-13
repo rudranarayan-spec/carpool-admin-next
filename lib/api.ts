@@ -1,7 +1,6 @@
 // lib/api.ts
 import axios from "axios";
 
-// Helper function to extract token from document cookies
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
@@ -10,15 +9,12 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-// Helper function to retrieve auth token
 function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
 
-  // 1. Try reading the cookie set by auth session
   const cookieToken = getCookie("admin_session");
   if (cookieToken) return cookieToken;
 
-  // 2. Fallback to localStorage keys
   return (
     localStorage.getItem("admin_session") ||
     localStorage.getItem("token") ||
@@ -26,15 +22,18 @@ function getAuthToken(): string | null {
   );
 }
 
+// Ensure base URL falls back gracefully to backend port 5000 if env is missing
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000/api/v1";
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_SOCKET_URL,
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
   timeout: 10000,
 });
 
-// Request Interceptor: Attach Bearer Token automatically
+// Request Interceptor
 apiClient.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
@@ -46,7 +45,12 @@ apiClient.interceptors.request.use(
     (config as any).metadata = { startTime: new Date() };
 
     const method = config.method?.toUpperCase() || "GET";
-    const fullUrl = `${config.baseURL}${config.url}`;
+    
+    // Construct valid absolute target URL safely
+    const fullUrl = new URL(
+      config.url || "",
+      config.baseURL || BASE_URL
+    ).toString();
 
     console.log(
       `%c 🚀 [API REQUEST] %c ${method} %c ${fullUrl}`,
@@ -68,7 +72,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Logs & Error Handling
+// Response Interceptor
 apiClient.interceptors.response.use(
   (response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
