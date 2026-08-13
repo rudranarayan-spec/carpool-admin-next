@@ -80,7 +80,7 @@ export const useAdminNotifications = () => {
 
     // Allow both WebSocket and Polling fallback for resilient connections
     const socket = io(socketUrl, {
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       withCredentials: true,
       autoConnect: true,
     });
