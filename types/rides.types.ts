@@ -18,8 +18,7 @@ export interface RoutePoint {
   lng: number;
 }
 // types/rides.types.ts
-export type RideStatus = "scheduled" | "in_progress" | "completed" | "cancelled";
-// Minimal Ride interface for list view (matches optimized SQL query)
+export type RideStatus = "scheduled" | "ongoing" | "completed" | "cancelled" | "expired";
 export interface RideListItem extends Driver, Vehicle {
   [x: string]: any;
   id: number;
@@ -85,11 +84,10 @@ export interface CreateRidePayload {
   price_per_seat: number;
   total_seats: number;
   available_seats?: number;
-  status?: 'scheduled' | 'completed' | 'cancelled' | 'in_progress';
+  status?: 'scheduled' | 'completed' | 'cancelled' | 'ongoing' | "expired";
 }
 
 // Partial payload for updating an existing ride
-export type UpdateRidePayload = Partial<CreateRidePayload>;
 
 // Generic API response shapes
 export interface FetchRidesResponse {
@@ -231,4 +229,18 @@ export interface FetchAdminRideDetailsResponse {
   success: boolean;
   message: string;
   data: AdminRideDetailsData;
+}
+
+
+export interface UpdateRidePayload {
+  status?: string;
+  seat?: number;
+  price?: number;
+}
+
+// Response payload structure returned by the controller
+export interface MutationRideResponse {
+  status: "success" | "fail" | "error";
+  message: string;
+  updatedFields?: Array<keyof UpdateRidePayload>;
 }

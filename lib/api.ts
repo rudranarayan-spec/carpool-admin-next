@@ -24,6 +24,7 @@ function getAuthToken(): string | null {
 
 // Ensure base URL falls back gracefully to backend port 5000 if env is missing
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://carpool-node-backend-app.onrender.com/api/v1" || "http://localhost:5000/api/v1";
+// console.log(BASE_URL)
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,

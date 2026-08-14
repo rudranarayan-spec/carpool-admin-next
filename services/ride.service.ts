@@ -34,7 +34,9 @@ export const RideService = {
         return response.data.data;
       }
 
-      throw new Error("Failed to fetch rides: API returned unsuccessful status");
+      throw new Error(
+        "Failed to fetch rides: API returned unsuccessful status",
+      );
     } catch (error: unknown) {
       console.error("Error fetching rides:", parseApiError(error));
       throw error;
@@ -43,7 +45,9 @@ export const RideService = {
 
   getRideById: async (id: number | string): Promise<RideDetails> => {
     try {
-      const response = await apiClient.get<FetchSingleRideResponse>(`/admin/rides/${id}`);
+      const response = await apiClient.get<FetchSingleRideResponse>(
+        `/admin/rides/${id}`,
+      );
 
       if (response.data.status === "success") {
         return response.data.data;
@@ -56,9 +60,14 @@ export const RideService = {
     }
   },
 
-  createRide: async (payload: CreateRidePayload): Promise<MutationRideResponse> => {
+  createRide: async (
+    payload: CreateRidePayload,
+  ): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.post<MutationRideResponse>("/admin/rides", payload);
+      const response = await apiClient.post<MutationRideResponse>(
+        "/admin/rides",
+        payload,
+      );
       return response.data;
     } catch (error: unknown) {
       console.error("Error creating ride:", parseApiError(error));
@@ -66,9 +75,15 @@ export const RideService = {
     }
   },
 
-  updateRide: async (id: number | string, payload: UpdateRidePayload): Promise<MutationRideResponse> => {
+  updateRide: async (
+    id: number | string,
+    payload: UpdateRidePayload,
+  ): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.patch<MutationRideResponse>(`/admin/rides/${id}`, payload);
+      const response = await apiClient.patch<MutationRideResponse>(
+        `/admin/rides/${id}`,
+        payload,
+      );
       return response.data;
     } catch (error: unknown) {
       console.error(`Error updating ride #${id}:`, parseApiError(error));
@@ -78,7 +93,9 @@ export const RideService = {
 
   deleteRide: async (id: number | string): Promise<MutationRideResponse> => {
     try {
-      const response = await apiClient.delete<MutationRideResponse>(`/admin/rides/${id}`);
+      const response = await apiClient.delete<MutationRideResponse>(
+        `/admin/rides/${id}`,
+      );
       return response.data;
     } catch (error: unknown) {
       console.error(`Error deleting ride #${id}:`, parseApiError(error));
@@ -87,10 +104,12 @@ export const RideService = {
   },
 
   // Rides published by drived
-  getRidesByDriverId: async (driverId: number | string): Promise<DriverRideItem[]> => {
+  getRidesByDriverId: async (
+    driverId: number | string,
+  ): Promise<DriverRideItem[]> => {
     try {
       const response = await apiClient.get<FetchDriverRidesResponse>(
-        `/admin/rides/driver/${driverId}`
+        `/admin/rides/driver/${driverId}`,
       );
 
       if (response.data.success) {
@@ -99,16 +118,21 @@ export const RideService = {
 
       throw new Error("Failed to fetch driver rides");
     } catch (error: unknown) {
-      console.error(`Error fetching rides for driver #${driverId}:`, parseApiError(error));
+      console.error(
+        `Error fetching rides for driver #${driverId}:`,
+        parseApiError(error),
+      );
       throw error;
     }
   },
 
-  // Rides booked by passenger 
-  getRidesByPassengerId: async (passengerId: number | string): Promise<PassengerRideItem[]> => {
+  // Rides booked by passenger
+  getRidesByPassengerId: async (
+    passengerId: number | string,
+  ): Promise<PassengerRideItem[]> => {
     try {
       const response = await apiClient.get<FetchPassengerRidesResponse>(
-        `/admin/rides/passenger/${passengerId}`
+        `/admin/rides/passenger/${passengerId}`,
       );
 
       if (response.data.success) {
@@ -117,24 +141,34 @@ export const RideService = {
 
       throw new Error("Failed to fetch passenger rides");
     } catch (error: unknown) {
-      console.error(`Error fetching rides for passenger #${passengerId}:`, parseApiError(error));
+      console.error(
+        `Error fetching rides for passenger #${passengerId}:`,
+        parseApiError(error),
+      );
       throw error;
     }
   },
 
-  getAdminRideDetails: async (rideId: number | string): Promise<AdminRideDetailsData> => {
+  getAdminRideDetails: async (
+    rideId: number | string,
+  ): Promise<AdminRideDetailsData> => {
     try {
       const response = await apiClient.get<FetchAdminRideDetailsResponse>(
-        `/admin/rides/details/${rideId}`
+        `/admin/rides/details/${rideId}`,
       );
 
       if (response.data.success) {
         return response.data.data;
       }
 
-      throw new Error(response.data.message || "Failed to fetch admin ride details");
+      throw new Error(
+        response.data.message || "Failed to fetch admin ride details",
+      );
     } catch (error: unknown) {
-      console.error(`Error fetching admin ride details for #${rideId}:`, parseApiError(error));
+      console.error(
+        `Error fetching admin ride details for #${rideId}:`,
+        parseApiError(error),
+      );
       throw error;
     }
   },

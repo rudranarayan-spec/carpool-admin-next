@@ -36,6 +36,7 @@ import {
   CreateRidePayload,
   RideListItem,
   RideStatus,
+  UpdateRidePayload,
 } from "@/types/rides.types"; // Adjust path as needed
 import { toast } from "sonner";
 import EditRideForm from "@/components/dashboard/EditRideForm";
@@ -56,7 +57,7 @@ export default function RideManagementPage() {
 
   // Edit / Delete State Controls
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editFormData, setEditFormData] = useState<Partial<RideListItem>>({});
+  const [editFormData, setEditFormData] = useState<UpdateRidePayload>({});
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   // ----------------------------------------------------
@@ -128,11 +129,10 @@ export default function RideManagementPage() {
       payload,
     }: {
       id: number | string;
-      payload: Partial<RideListItem>;
-    }) => RideService.updateRide(id, payload),
+      payload: UpdateRidePayload;
+    }) => RideService.updateRide(id, payload), // calls your updated updateRide service method
     onSuccess: (response) => {
       if (response.status === "success") {
-        // Invalidate list query and single ride query to refresh data
         queryClient.invalidateQueries({ queryKey: ["rides"] });
         queryClient.invalidateQueries({ queryKey: ["ride", selectedRideId] });
         setIsEditing(false);
@@ -298,12 +298,12 @@ export default function RideManagementPage() {
   const getStatusBadge = (status: RideStatus | string) => {
     const normalizedStatus = status.toLowerCase();
     switch (normalizedStatus) {
-      case "in progress":
+      case "ongoing":
       case "in_progress":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            In Progress
+            Ongoing
           </span>
         );
       case "completed":
@@ -411,8 +411,8 @@ export default function RideManagementPage() {
                   key={tab}
                   onClick={() => setSelectedFilter(tab)}
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                      : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                    : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
                     }`}
                 >
                   {tab}
@@ -962,7 +962,11 @@ export default function RideManagementPage() {
                       <button
                         onClick={() => {
                           if (selectedRide) {
-                            setEditFormData(selectedRide);
+                            setEditFormData({
+                              status: selectedRide.status,
+                              seat: Number(selectedRide.available_seats),
+                              price: Number(selectedRide.price_per_seat),
+                            });
                           }
                           setIsEditing(true);
                         }}
