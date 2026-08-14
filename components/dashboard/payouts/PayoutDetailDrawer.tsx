@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { PayoutService } from "@/services/payout.service";
 import { PayoutStatus } from "@/types/payouts.types";
+import { useRouter } from "next/navigation";
 
 interface PayoutDetailDrawerProps {
   payoutId: number | null;
@@ -37,6 +38,7 @@ export function PayoutDetailDrawer({
   renderStatusBadge,
 }: PayoutDetailDrawerProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // 1. Fetch Detailed Payout Information
   const {
@@ -259,7 +261,7 @@ export function PayoutDetailDrawer({
                           <span className="text-gray-400 flex items-center gap-1">
                             <Hash className="w-3 h-3 text-gray-400" /> Driver ID:
                           </span>
-                          <span className="font-mono px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 font-semibold text-[11px]">
+                          <span onClick={() => router.push(`/users/${detail.driver_id}`)} className="font-mono px-2 py-0.5 rounded-md cursor-pointer bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 font-semibold text-[11px]">
                             #{detail.driver_id}
                           </span>
                         </div>

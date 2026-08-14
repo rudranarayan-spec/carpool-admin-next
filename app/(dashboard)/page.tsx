@@ -348,7 +348,7 @@ export default function DashboardPage() {
       {/* 3. Main Center Grid: Chart Analytics & Live Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Real-time Analytics Area Chart */}
-        <div className="lg:col-span-2 rounded-2xl p-5 sm:p-6 flex flex-col justify-between border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md relative overflow-hidden">
+        <div className="lg:col-span-2 rounded-2xl p-5 sm:p-6 flex flex-col justify-between border border-slate-200/80 dark:border-white/10 bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md relative overflow-hidden">
           <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -428,7 +428,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Live Activity Feed */}
-        <div className="rounded-2xl p-5 sm:p-6 flex flex-col justify-between border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md">
+        <div className="rounded-2xl p-5 sm:p-6 flex flex-col justify-between border border-slate-200/80 dark:border-white/10 bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 dark:border-white/10">
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
@@ -439,7 +439,7 @@ export default function DashboardPage() {
               </span>
             </div>
 
-            <div className="space-y-3.5 mt-5 max-h-[320px] overflow-y-auto pr-1">
+            <div className="space-y-3.5 mt-5 max-h-80 overflow-y-auto pr-1">
               {isLoading ? (
                 Array.from({ length: 4 }).map((_, idx) => (
                   <div
@@ -517,7 +517,7 @@ export default function DashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200/80 dark:border-white/10 text-[11px] uppercase font-bold text-slate-400 dark:text-gray-400 tracking-wider bg-slate-50/50 dark:bg-white/[0.02]">
+              <tr className="border-b border-slate-200/80 dark:border-white/10 text-[11px] uppercase font-bold text-slate-400 dark:text-gray-400 tracking-wider bg-slate-50/50 dark:bg-white/2">
                 <th className="py-3.5 px-6">Applicant</th>
                 <th className="py-3.5 px-6">Vehicles & Contact</th>
                 <th className="py-3.5 px-6">Compliance Status</th>
