@@ -29,6 +29,7 @@ import {
   Star,
   MessageCircleCheck,
   AlertCircle,
+  IndianRupee,
 } from "lucide-react";
 
 const navItems = [
@@ -36,10 +37,11 @@ const navItems = [
   { name: "Ride Management", href: "/rides", icon: Car },
   { name: "Driver Management", href: "/drivers", icon: UserCheck },
   { name: "Users", href: "/users", icon: ShieldCheck },
-  { name: "Financials", href: "/financials", icon: Wallet },
   { name: "Vehicles", href: "/vehicles", icon: Truck },
-  { name: "Offers", href: "/offers", icon: Ticket },
+  { name: "Payouts", href: "/payouts", icon: IndianRupee },
+  { name: "Financials", href: "/financials", icon: Wallet },
   { name: "Ratings", href: "/ratings", icon: Star },
+  { name: "Offers", href: "/offers", icon: Ticket },
   { name: "Conversations", href: "/conversations", icon: MessageCircleCheck },
   { name: "Emergency SOS", href: "/sos", icon: AlertCircle },
 ];

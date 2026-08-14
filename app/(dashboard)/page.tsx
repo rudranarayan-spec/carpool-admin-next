@@ -497,7 +497,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 4. Driver Approvals Queue Table Section */}
-      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-linear-to-br from-white to-slate-50/60 dark:from-[#0B0F17] dark:to-[#090C10] shadow-xs backdrop-blur-md overflow-hidden">
         {/* Table Header Section */}
         <div className="p-5 sm:p-6 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between gap-4">
           <div>
