@@ -3,6 +3,7 @@
 
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Search,
   CheckCircle2,
@@ -19,6 +20,7 @@ import {
 import { PayoutService } from "@/services/payout.service";
 import { PayoutListItem, PayoutStatus } from "@/types/payouts.types";
 import { PayoutDetailDrawer } from "@/components/dashboard/payouts/PayoutDetailDrawer";
+import { ConfirmModal } from "@/components/ConfirmModal";
 
 export default function AdminPayoutsPage() {
   const queryClient = useQueryClient();
@@ -29,6 +31,13 @@ export default function AdminPayoutsPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPayoutId, setSelectedPayoutId] = useState<number | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
+
+  // Confirmation Modal State
+  const [confirmPayout, setConfirmPayout] = useState<{
+    id: number;
+    amount: number;
+    driverName: string;
+  } | null>(null);
 
   // 1. Fetch Payouts List
   const {
@@ -51,10 +60,11 @@ export default function AdminPayoutsPage() {
     mutationFn: (id: number) => PayoutService.processPayout(id),
     onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["admin-payouts"] });
-      alert(res.message || "Payout processed successfully!");
+      toast.success(res.message || "Payout processed successfully!");
+      setConfirmPayout(null);
     },
     onError: (err: any) => {
-      alert(err.response?.data?.message || "Failed to process payout.");
+      toast.error(err.response?.data?.message || "Failed to process payout.");
     },
   });
 
@@ -142,7 +152,10 @@ export default function AdminPayoutsPage() {
           </p>
         </div>
         <button
-          onClick={() => refetch()}
+          onClick={() => {
+            refetch();
+            toast.info("Refreshed payout list");
+          }}
           disabled={isFetching}
           className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#12171F] border border-gray-200 dark:border-white/10 rounded-xl text-xs font-semibold shadow-xs hover:bg-gray-50 dark:hover:bg-white/5 active:scale-95 transition cursor-pointer"
         >
@@ -227,11 +240,10 @@ export default function AdminPayoutsPage() {
                 setStatusFilter(st);
                 setCurrentPage(1);
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${
-                statusFilter === st
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize whitespace-nowrap transition cursor-pointer ${statusFilter === st
                   ? "bg-indigo-600 text-white shadow-xs"
                   : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
-              }`}
+                }`}
             >
               {st}
             </button>
@@ -243,7 +255,7 @@ export default function AdminPayoutsPage() {
       <div className="bg-white dark:bg-[#12171F] border border-gray-200/80 dark:border-white/10 rounded-2xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50/80 dark:bg-white/[0.02] border-b border-gray-200/80 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
+            <thead className="bg-gray-50/80 dark:bg-white/2 border-b border-gray-200/80 dark:border-white/10 text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">
               <tr>
                 <th className="p-4">Payout Info</th>
                 <th className="p-4">Driver</th>
@@ -288,7 +300,7 @@ export default function AdminPayoutsPage() {
                   <tr
                     key={payout.id}
                     onClick={() => handleOpenDrawer(payout.id)}
-                    className="hover:bg-gray-50/80 dark:hover:bg-white/[0.03] transition cursor-pointer"
+                    className="hover:bg-gray-50/80 dark:hover:bg-white/3 transition cursor-pointer"
                   >
                     {/* Code & Ride */}
                     <td className="p-4">
@@ -341,7 +353,7 @@ export default function AdminPayoutsPage() {
                     <td className="p-4 text-right">
                       <div
                         className="flex items-center justify-end gap-2"
-                        onClick={(e) => e.stopPropagation()} // Stop drawer from opening when clicking action buttons directly
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => handleOpenDrawer(payout.id)}
@@ -353,15 +365,13 @@ export default function AdminPayoutsPage() {
 
                         {payout.status === "pending" && (
                           <button
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Process payout of ₹${payout.net_payout_amount} to ${payout.driver_name}?`
-                                )
-                              ) {
-                                processPayoutMutation.mutate(payout.id);
-                              }
-                            }}
+                            onClick={() =>
+                              setConfirmPayout({
+                                id: payout.id,
+                                amount: Number(payout.net_payout_amount),
+                                driverName: payout.driver_name,
+                              })
+                            }
                             disabled={processPayoutMutation.isPending}
                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-semibold rounded-xl text-xs transition shadow-xs disabled:opacity-50 cursor-pointer"
                           >
@@ -411,6 +421,26 @@ export default function AdminPayoutsPage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         renderStatusBadge={renderStatusBadge}
+      />
+
+      {/* ACTION CONFIRMATION MODAL */}
+      <ConfirmModal
+        isOpen={!!confirmPayout}
+        title="Confirm Payout Disbursement"
+        description={
+          confirmPayout
+            ? `Are you sure you want to disburse ₹${confirmPayout.amount} directly to ${confirmPayout.driverName}? This action cannot be reversed.`
+            : ""
+        }
+        confirmText="Yes, Disburse Now"
+        cancelText="Cancel"
+        isLoading={processPayoutMutation.isPending}
+        onClose={() => setConfirmPayout(null)}
+        onConfirm={() => {
+          if (confirmPayout) {
+            processPayoutMutation.mutate(confirmPayout.id);
+          }
+        }}
       />
     </div>
   );

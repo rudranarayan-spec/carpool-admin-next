@@ -30,6 +30,7 @@ import {
   MessageCircleCheck,
   AlertCircle,
   IndianRupee,
+  Bell,
 } from "lucide-react";
 
 const navItems = [
@@ -48,6 +49,7 @@ const navItems = [
 
 const logSubItems = [
   { name: "Activity Logs", href: "/activity-logs", icon: Activity },
+  { name: "System Notifications", href: "/notifications", icon: Bell },
   { name: "System Logs", href: "/system-logs", icon: MonitorX },
 ];
 
