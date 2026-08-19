@@ -217,11 +217,10 @@ export default function VehicleApprovalsPage() {
                   setStatusFilter(tab.value);
                   setPage(1);
                 }}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                  isActive
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${isActive
                     ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
                     : "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -242,86 +241,111 @@ export default function VehicleApprovalsPage() {
         )}
 
         {!isListLoading && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  <th className="px-6 py-4">Vehicle Specification</th>
-                  <th className="px-6 py-4">Driver Details</th>
-                  <th className="px-6 py-4">Reg Number</th>
-                  <th className="px-6 py-4">Submitted Date</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-white/10 text-sm">
-                {vehicles.length > 0 ? (
-                  vehicles.map((item: VehicleListItem) => (
-                    <tr
-                      key={item.id}
-                      onClick={() => setSelectedVehicleId(item.id)}
-                      className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition cursor-pointer group"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="font-bold text-gray-900 dark:text-white">
-                            {item.model}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
-                            <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
-                            {item.fuel_type} • {item.color}
-                          </p>
+          <div className="w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#12171F] shadow-sm">
+            <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-white/10">
+              <table className="w-full text-left border-collapse min-w-3xl">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-white/10 bg-gray-50/80 dark:bg-white/2 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-6 py-4 w-20">ID</th>
+                    <th className="px-6 py-4">Vehicle Specification</th>
+                    <th className="px-6 py-4">Driver Details</th>
+                    <th className="px-6 py-4">Reg Number</th>
+                    <th className="px-6 py-4 hidden md:table-cell">Submitted Date</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-white/10 text-sm">
+                  {vehicles.length > 0 ? (
+                    vehicles.map((item: VehicleListItem) => (
+                      <tr
+                        key={item.id}
+                        onClick={() => setSelectedVehicleId(item.id)}
+                        className="hover:bg-gray-50/80 dark:hover:bg-white/2 transition-colors cursor-pointer group"
+                      >
+                        {/* ID Column */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-mono text-xs font-semibold px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-200/60 dark:border-white/10">
+                            #{item.id}
+                          </span>
+                        </td>
+
+                        {/* Vehicle Specification */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                              {item.model}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5">
+                              <span className="w-2 h-2 rounded-full bg-blue-500 inline-block shrink-0" />
+                              {item.fuel_type} • {item.color}
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Driver Details */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <p className="font-bold text-gray-800 dark:text-gray-200">
+                              {item.driver_name}
+                            </p>
+                            <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                              {item.driver_phone}
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Registration Number */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="font-mono font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-md text-xs border border-blue-200/50 dark:border-blue-500/20">
+                            {item.registration_number}
+                          </span>
+                        </td>
+
+                        {/* Submitted Date */}
+                        <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap hidden md:table-cell">
+                          {new Date(item.created_at).toLocaleDateString("en-US", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {renderStatusBadge(item.status)}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVehicleId(item.id);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-500 dark:hover:text-white text-xs font-bold transition-all duration-150 active:scale-95 flex items-center gap-1.5 ml-auto border border-blue-200/60 dark:border-blue-500/20 shadow-2xs cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" /> Inspect
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <p className="text-sm font-medium">No vehicle records found matching your filters.</p>
+                          <p className="text-xs text-gray-400">Try adjusting your search criteria or resetting filters.</p>
                         </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <p className="font-bold text-gray-800 dark:text-gray-200">
-                            {item.driver_name}
-                          </p>
-                          <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
-                            {item.driver_phone}
-                          </p>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-mono font-extrabold text-blue-600 dark:text-blue-400">
-                          {item.registration_number}
-                        </p>
-                      </td>
-
-                      <td className="px-6 py-4 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
-                        {new Date(item.created_at).toLocaleDateString("en-US", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {renderStatusBadge(item.status)}
-                      </td>
-
-                      <td className="px-6 py-4 text-right whitespace-nowrap">
-                        <button className="px-3.5 py-1.5 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 ml-auto">
-                          <Eye className="w-3.5 h-3.5" /> Inspect
-                        </button>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
-                    >
-                      No vehicle records found matching your filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -619,11 +643,10 @@ function DocumentCard({
         </span>
         {verifiedStatus && (
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${
-              verifiedStatus === "active"
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${verifiedStatus === "active"
                 ? "bg-emerald-500/10 text-emerald-500"
                 : "bg-amber-500/10 text-amber-500"
-            }`}
+              }`}
           >
             {verifiedStatus}
           </span>

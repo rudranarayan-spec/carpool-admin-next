@@ -402,7 +402,7 @@ export default function RideManagementPage() {
         </div>
 
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 no-scrollbar">
-          {["All", "Scheduled", "In Progress", "Completed", "Cancelled"].map(
+          {["All", "Scheduled", "In Progress", "Completed", "Cancelled", "Expired"].map(
             (tab) => {
               const isActive =
                 selectedFilter.toLowerCase() === tab.toLowerCase();
