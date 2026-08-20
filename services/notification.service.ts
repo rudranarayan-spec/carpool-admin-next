@@ -13,7 +13,7 @@ export const NotificationService = {
   // 1. GET Admin Stats
   getStats: async () => {
     const res = await apiClient.get<ApiResponse<NotificationStats>>(
-      "/admin/notifications/stats"
+      "/admin/notifications/stats",
     );
     return res.data;
   },
@@ -22,7 +22,7 @@ export const NotificationService = {
   getNotifications: async (page = 1, limit = 20) => {
     const res = await apiClient.get<ApiPaginatedResponse<NotificationItem>>(
       "/admin/notifications",
-      { params: { page, limit } }
+      { params: { page, limit } },
     );
     return res.data;
   },
@@ -31,7 +31,7 @@ export const NotificationService = {
   getDevices: async (page = 1, limit = 20) => {
     const res = await apiClient.get<ApiPaginatedResponse<DeviceItem>>(
       "/admin/notifications/devices",
-      { params: { page, limit } }
+      { params: { page, limit } },
     );
     return res.data;
   },
@@ -39,7 +39,7 @@ export const NotificationService = {
   // 4. GET Device by ID
   getDeviceById: async (id: number | string) => {
     const res = await apiClient.get<ApiResponse<DeviceItem>>(
-      `/admin/notifications/device/${id}`
+      `/admin/notifications/device/${id}`,
     );
     return res.data;
   },
@@ -47,7 +47,7 @@ export const NotificationService = {
   // 5. GET Notification by ID
   getNotificationById: async (id: number | string) => {
     const res = await apiClient.get<ApiResponse<NotificationItem>>(
-      `/admin/notifications/${id}`
+      `/admin/notifications/${id}`,
     );
     return res.data;
   },
@@ -56,8 +56,26 @@ export const NotificationService = {
   broadcast: async (payload: BroadcastPayload) => {
     const res = await apiClient.post<BroadcastResponse>(
       "/admin/notifications/broadcast",
-      payload
+      payload,
     );
     return res.data;
   },
 };
+
+export async function registerNotificationDevice(pushToken: string) {
+  let installationId = localStorage.getItem("installation_id");
+  if (!installationId) {
+    installationId = crypto.randomUUID();
+    localStorage.setItem("installation_id", installationId);
+  }
+
+  return apiClient.post("/notifications/devices", {
+    installationId,
+    pushToken,
+    platform: "web",
+    deviceType: "desktop",
+    browser: navigator.userAgent,
+    appVersion: "admin-web-v1",
+    permissionStatus: Notification.permission,
+  });
+}

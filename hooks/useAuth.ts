@@ -1,6 +1,11 @@
 // hooks/useAuth.ts
 import { useMutation } from "@tanstack/react-query";
-import { authService, AdminLoginPayload, AdminLoginResponse } from "@/services/auth.service";
+import {
+  authService,
+  AdminLoginPayload,
+  AdminLoginResponse,
+} from "@/services/auth.service";
+import { useEffect, useState } from "react";
 
 export function useLogin() {
   return useMutation<AdminLoginResponse, Error, AdminLoginPayload>({
@@ -20,4 +25,40 @@ export function useLogin() {
       window.location.href = redirectTo;
     },
   });
+}
+
+export function useAuth() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [user, setUser] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const storedUser = localStorage.getItem("admin_user");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+      } catch (err) {
+        console.error("Failed to parse user from storage", err);
+        setUser(null);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for storage changes in case of cross-tab logins/logouts
+    window.addEventListener("storage", checkAuth);
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
+
+  return { user, isAuthenticated, isLoading };
 }

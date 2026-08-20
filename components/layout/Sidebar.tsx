@@ -13,7 +13,6 @@ import {
   Wallet,
   Truck,
   Settings,
-  Plus,
   LogOut,
   Sun,
   Moon,
@@ -182,8 +181,8 @@ export default function Sidebar() {
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${isActive
-                      ? "text-blue-600 dark:text-blue-400 font-bold"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                     }`}
                   title={isCollapsed ? item.name : undefined}
                 >
@@ -198,8 +197,8 @@ export default function Sidebar() {
                   <div className="flex items-center gap-3.5 z-10">
                     <Icon
                       className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isActive
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                         }`}
                     />
                     {!isCollapsed && <span className="text-sm">{item.name}</span>}
@@ -222,16 +221,16 @@ export default function Sidebar() {
                   setUserLogsToggle(!isLogsOpen);
                 }}
                 className={`w-full relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${isLogRouteActive
-                    ? "text-blue-600 dark:text-blue-400 font-bold"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                  ? "text-blue-600 dark:text-blue-400 font-bold"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                   }`}
                 title={isCollapsed ? "Logs" : undefined}
               >
                 <div className="flex items-center gap-3.5 z-10">
                   <FileText
                     className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${isLogRouteActive
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                       }`}
                   />
                   {!isCollapsed && <span className="text-sm">Logs</span>}
@@ -268,8 +267,8 @@ export default function Sidebar() {
                             setUserLogsToggle(null); // Reset manual toggle on navigation so derived state takes over
                           }}
                           className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${isSubActive
-                              ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 font-bold"
-                              : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                            ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 font-bold"
+                            : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                             }`}
                         >
                           <SubIcon className="w-4 h-4" />
@@ -287,8 +286,8 @@ export default function Sidebar() {
               href="/settings"
               onClick={() => setIsMobileOpen(false)}
               className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 group ${pathname === "/settings"
-                  ? "text-blue-600 dark:text-blue-400 font-bold"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                ? "text-blue-600 dark:text-blue-400 font-bold"
+                : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
                 }`}
               title={isCollapsed ? "Settings" : undefined}
             >
@@ -302,8 +301,8 @@ export default function Sidebar() {
               <div className="flex items-center gap-3.5 z-10">
                 <Settings
                   className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/settings"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                    ? "text-blue-600 dark:text-blue-400"
+                    : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                     }`}
                 />
                 {!isCollapsed && <span className="text-sm">Settings</span>}

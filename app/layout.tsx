@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
+import NotificationProvider from "@/components/providers/NotificationProvider";
 
 export const metadata: Metadata = {
   title: "Carpooling | Fleet Management",
@@ -23,6 +24,7 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange={false}
           >
+            <NotificationProvider />
             {children}
           </ThemeProvider>
         </body>

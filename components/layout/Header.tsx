@@ -5,13 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Search,
-  Bell,
   Sparkles,
   Command,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  X,
 } from "lucide-react";
 
 interface NotificationItem {
@@ -77,10 +72,6 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
-  };
 
   return (
     <header className="h-18 min-h-18 border-b border-gray-200/80 dark:border-white/10 px-4 sm:px-6 lg:px-8 flex items-center justify-between bg-white/80 dark:bg-[#090C10]/80 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 select-none">
