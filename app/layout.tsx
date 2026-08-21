@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <QueryProvider>
-        <body className="bg-gray-100 dark:bg-[#090A0F] text-gray-900 dark:text-gray-100 antialiased selection:bg-blue-500 selection:text-white transition-colors duration-300">
+        <body suppressHydrationWarning className="bg-gray-100 dark:bg-[#090A0F] text-gray-900 dark:text-gray-100 antialiased selection:bg-blue-500 selection:text-white transition-colors duration-300">
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"
