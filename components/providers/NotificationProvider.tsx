@@ -11,14 +11,15 @@ export default function NotificationProvider() {
     const isRegistered = useRef(false);
 
     useEffect(() => {
+        let unsubscribe: (() => void) | undefined;
+
+        // Exit immediately if user is logged out
         if (!isAuthenticated || !user) {
             isRegistered.current = false;
             return;
         }
 
         if (isRegistered.current) return;
-
-        let unsubscribe: (() => void) | undefined;
 
         const setupFCM = async () => {
             if (!("Notification" in window)) {
@@ -69,8 +70,11 @@ export default function NotificationProvider() {
 
         setupFCM();
 
+        // Cleanup foreground listener when logging out or unmounting
         return () => {
-            if (unsubscribe) unsubscribe();
+            if (unsubscribe) {
+                unsubscribe();
+            }
         };
     }, [isAuthenticated, user]);
 
